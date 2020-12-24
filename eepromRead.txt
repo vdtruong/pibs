@@ -1,0 +1,9 @@
+You must clear or set the TXAK-bit before the read.
+
+ACK every (sequential) byte read, except the last one.
+
+case 2: 
+	IIC2C1_TXAK = 0; // send out ack after reception 
+	if (count == ARRAYSIZE-1) //@last byte; declare ARRAY[size] gives ARRAY[0]..ARRAY[size-1]
+		IIC2C1_TXAK = 1;// no ack 
+		eepromReadData[count] = IIC2D; 
