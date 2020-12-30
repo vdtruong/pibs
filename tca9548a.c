@@ -93,28 +93,33 @@ unsigned char tca9548a_fsm(unsigned char cntrl_reg)
 			// Send a start condition.
 			case 1:											// i2c_start
 				IIC2C = 0xb0;								// Send the start bit.
-				if (prev_st == 0 || prev_st == 9 || prev_st == 16)
+				/*if (prev_st == 0 || prev_st == 9 || prev_st == 16)
 					i2c_state = 2; 						// send dev. addr with wr bit.
 				else if (prev_st == 11)
 					i2c_state = 12;						// send dev. addr with rd bit.
+				*/
+				i2c_state = 2;								// next state
 				break;
 			/***************************/
 			// Send a device address and write bit.
 			case 2:											// 
-				while(!IIC2S_TCF);							// Wait until transmission is done.  Wait for any transfer to complete.
+				while(!IIC2S_TCF);						// Wait until transmission is done.  Wait for any transfer to complete.
 				IIC2D = *(i2c_buffer + 0);				// Send the addr. field with WR bit set (R/W = WR).
-				prev_st = 2;
+				//prev_st = 2;
 				i2c_state = 5; 							// I2C_ACK_QRY;			// next state
 				break;
 			/***************************/
 			// Query for ACK response from slave.
 			case 5: 											// I2C_ACK_QRY;
 				if (IIC2S_RXAK)							/*	If NAK from slave. */
-					i2c_state = 0;							//I2C_IDLE;
+				{
+					//i2c_state = 0;							// I2C_IDLE;
+					done = 1;								// done
+				}
 				else 											// If ACK.
 				{
-					if (prev_st == 2)						// If previous command is send device address.
-						i2c_state = 6;						// Go to send iic channel.	
+					//if (prev_st == 2)						// If previous command is send device address.
+					i2c_state = 6;							// Go to send iic channel.	
 				}
 				break;
 			/***************************/
@@ -124,14 +129,14 @@ unsigned char tca9548a_fsm(unsigned char cntrl_reg)
 				IIC2D = cntrl_reg_label;				// Send the tca9548a iic channel..
 				//Delay(20);									// Delay 20 ms.
 				//snd_cmd = 1;								// Indicates after ACK, send a command.
-				prev_st = 6;
+				//prev_st = 6;
 				i2c_state = 7; 							// stop bit;			// next state
 				break;
 			/***************************/
 			// Send a stop and go to slave mode.
 			case 7:											// 
 				IIC2C_MST = 0;								// Send a stop (go to slave mode)
-				i2c_state = 0;								// idle
+				//i2c_state = 0;								// idle
 				done = 1;									// Finished
 				break;
 			/**************************/

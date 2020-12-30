@@ -31,6 +31,7 @@
 
 
 #include <hidef.h>      /* for EnableInterrupts macro */
+//#include "MiscFunctions.c"
 #include "derivative.h" /* include peripheral declarations */
 #include "display.h"
 #include "eepromglobals.h"
@@ -45,42 +46,86 @@
 #include "ContUpdate.c"
 #include "CommandsFunctions.c"
 #include "i2c_sens_states.c"
-
+#include "holtek_ht16k33.c"
+#include "tca9548a.c"
 
 
 void main(void) { 
   
-  count = 0;
-  labelCnt = 0;
-  lcdUpdate = 0;
-  cnt2 = 0;
-  cnt3 = 0;
-  row = 0;
-  col = 0;
-  flag = 0;
-  
-  initDevice();
-  EnableInterrupts; // enable interrupts
-  ADCSC1_AIEN = 1;  // Enable ADC interrupt
-  APCTL1_ADPC0 = 1; // 1-analog, 0-digital
-                                                       
-  i2c1MstrStart(LCDSLAVE,0); /* initialize LCD display */              
-  delay(20000);
-  dsplyLabel(); // for LCD labels
+  	/*count = 0;
+  	labelCnt = 0;
+  	lcdUpdate = 0;
+  	cnt2 = 0;
+  	cnt3 = 0;
+  	row = 0;
+  	col = 0;
+  	flag = 0;
+  	*/
 
-  for(;;) {
-  
-    /* need these three functions to display 7-seg */
-    /* continously */
-    display_out(duty_cycle, (byte)0x0F); 
-    display_out(normal, all_on); 
-    display_out(activate_digit, activate_all_direct);     
+	static unsigned char cntrl_reg = 0;																		/* Set the counter for the tca9548a. */
+	static unsigned char tca_done = 0;
+	static struct Shtc3Outputs sens_outputs;
+	static unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
+	static unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
+	
+	sens_outputs.done = 0;
+  	
+  	initDevice();
+  	delay(1);						// 1 ms
+	//initHt16k33();
 
-    contUpdate(); /* for all updates */  
-    sciComm();    /* comm. with labview */
+	/*
+	EnableInterrupts; // enable interrupts
+  	ADCSC1_AIEN = 1;  // Enable ADC interrupt
+  	APCTL1_ADPC0 = 1; // 1-analog, 0-digital
+  	*/
+
+  	//i2c1MstrStart(LCDSLAVE,0); /* initialize LCD display */              
+  	//delay(20000);
+	//dsplyLabel(); 					// for LCD labels
+
+  	for(;;) {
+  		
+		/*IIC2C1_TX = 1;		// SEt fror transmit.
+		IIC2C1_MST = 1;	// Set for master start bit.
+		IIC2D = 0x70;
+		//delay(1);
+		IIC2C1_MST = 0;	// Set for master stop bit.
+		*/
+		/* Switch tca to each temp. sensor. */
+		// tca_done = tca9548a_fsm(cntrl_reg);
+		//while(!tca9548a_fsm(cntrl_reg));		/* Wait until the switch is done. */
+		/* Capture temperature data. */
+		while(!sens_outputs.done){				
+			sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
+		}
+		/* Display data to 7-seg display. */
+		/* Wait until display is done. */
+		//while(!ht16k33_fsm(*(slv_addr + slv_addr_cntr), sens_outputs.data))
+		//slv_addr_cntr += 1;						/* Move to next display. */
+		//if(slv_addr_cntr == 8)
+		//	slv_addr_cntr = 0;					/* Reset to first display. */
+   	
+    	/* need these three functions to display 7-seg */
+    	/* continously */
+    	/*
+		display_out(duty_cycle, (byte)0x0F); 
+    	display_out(normal, all_on); 
+    	display_out(activate_digit, activate_all_direct);     
+		*/
+
+		/*while(!sens_outputs.done){				
+			sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
+		/*	}
+		delay(1);
+		sens_outputs.done = 0;
+		*/
+
+    	//contUpdate(); /* for all updates */  
+    	//sciComm();    /* comm. with labview */
   
-  } /* loop forever */
-  /* please make sure that you never leave main */
+  } 	/* loop forever */
+  		/* please make sure that you never leave main */
 }
 
 
