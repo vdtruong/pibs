@@ -57,14 +57,18 @@ void spi1Init(void){	// for DAC
 }
 /* For demo board, iic1 is on pta. */
 void iic1Init(void){
-  	IIC1F = 0x0B;     // multiply factor of 1, SCL divider of 40, br=100k
   	//IIC2F = 0x09;     // multiply factor of 1, SCL divider of 32, br=125k
+  	IIC2F = 0x0A;     // multiply factor of 1, SCL divider of 36, br=111.11k
+  	//IIC1F = 0x0B;     // multiply factor of 1, SCL divider of 40, br=100k
+  	//IIC1F = 0x0C;     // multiply factor of 1, SCL divider of 440, br=90.9k
   	IIC1C1_IICEN = 1; // iic is enabled
   	IIC1C1_IICIE = 0; // iic int. not enabled
 }
 void iic2Init(void){
-  	IIC2F = 0x0B;     // multiply factor of 1, SCL divider of 40, br=100k
   	//IIC2F = 0x09;     // multiply factor of 1, SCL divider of 32, br=125k
+  	IIC2F = 0x0A;     // multiply factor of 1, SCL divider of 36, br=111.11k
+  	//IIC2F = 0x0B;     // multiply factor of 1, SCL divider of 40, br=100k
+  	//IIC2F = 0x0C;     // multiply factor of 1, SCL divider of 44, br=90.9k
   	IIC2C1_IICEN = 1; // iic is enabled
   	IIC2C1_IICIE = 0; // iic int. not enabled
 }

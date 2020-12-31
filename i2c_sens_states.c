@@ -283,7 +283,7 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 			/***************************/
 			// Send a device address and write bit before wake command.
 			case 2:												// i2c_start
-				while(!IIC2S_TCF);							// Wait until transmission is done.  Wait for any transfer to complete.
+				//while(!IIC2S_TCF);							// Wait until transmission is done.  Wait for any transfer to complete.
 				IIC2D = *(i2c_buffer + 0);					// Send the addr. field with WR bit set (R/W = WR).
 				i2c_state = 5; 								// I2C_ACK_QRY;			// next state
 				break;
@@ -321,9 +321,32 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 				break;
 			/***************************/
 			// Query for ACK response from slave.
+			case 5: 												// I2C_ACK_QRY;
+				if (prev_st == 0)								// If previous command is write before wakeup msb command.
+					i2c_state = 6;								// Go to wakeup cmd msb.
+				else if (prev_st == 6)
+					i2c_state = 7;								// Go to wakeup cmd lsb
+				else if (prev_st == 7 || prev_st == 11 || prev_st == 19)
+					i2c_state = 8;								// Send stop bit state.
+				else if (prev_st == 9)
+					i2c_state = 10;							// send meas. command msb
+				else if (prev_st == 10)
+					i2c_state = 11;							// send meas. command lsb
+				else if (prev_st == 12)
+					i2c_state = 13;							// wait for read to start 
+				else if (prev_st == 16)
+					i2c_state = 18;							// send sleep command msb
+				else if (prev_st == 18)
+					i2c_state = 19;							// send sleep command lsb
+				break;
+			/***************************/
+			// Query for ACK response from slave.
 			/*case 5: 												// I2C_ACK_QRY;
-				if (IIC2S_RXAK)								// If NAK from slave. 
+				if (IIC2S_RXAK)								//	If NAK from slave.
+				{
 					i2c_state = 0;								// I2C_IDLE
+					ste_out.done = 1;							// Finish.
+				}
 				else 												// If ACK.
 				{
 					if (prev_st == 0)							// If previous command is write before wakeup msb command.
@@ -346,11 +369,9 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 				break;*/
 			/***************************/
 			// Query for ACK response from slave.
-			case 5: 												// I2C_ACK_QRY;
-				/*if (IIC2S_RXAK)								//	If NAK from slave.
-					i2c_state = 0;								// I2C_IDLE
-				else 												// If ACK.
-				{*/
+			/*case 5: 												// I2C_ACK_QRY;
+				if (!IIC2S_RXAK)								//	If ACK from slave.
+				{
 					if (prev_st == 0)							// If previous command is write before wakeup msb command.
 						i2c_state = 6;							// Go to wakeup cmd msb.
 					else if (prev_st == 6)
@@ -367,8 +388,13 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 						i2c_state = 18;						// send sleep command msb
 					else if (prev_st == 18)
 						i2c_state = 19;						// send sleep command lsb
-				//}
-				break;
+				}
+				else 												// If NACK.
+				{
+					ste_out.done = 1;							// Finish.
+					i2c_state = 0;								// I2C_IDLE
+				}
+				break;*/
 			/***************************/
 			// Send wakeup msb command.
 			case 6:												// 
@@ -381,16 +407,37 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 				break;
 			/***************************/
 			// Send wakeup lsb command.
+			/*case 7:												// 
+				while(!IIC2S_TCF);							// Wait until transmission is done.
+				IIC2D = *(i2c_buffer + 2);					// Send the wakeup lsb command.
+				prev_st = 7;
+				delay(60);
+				//i2c_state = 5; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 10; 								// I2C_ACK_QRY;			// next state
+				i2c_state = 8; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 2; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 1; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 11; 								// I2C_ACK_QRY;			// next state
+				break;*/
+			/***************************/
+			// Send wakeup lsb command.
 			case 7:												// 
 				while(!IIC2S_TCF);							// Wait until transmission is done.
-				IIC2D = *(i2c_buffer + 2);					// Send the wakeup msb command.
+				IIC2D = *(i2c_buffer + 2);					// Send the wakeup lsb command.
 				prev_st = 7;
+				//delay(60);
 				i2c_state = 5; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 10; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 8; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 2; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 1; 								// I2C_ACK_QRY;			// next state
+				//i2c_state = 11; 								// I2C_ACK_QRY;			// next state
 				break;
 			/***************************/
 			// Send a stop and go to slave mode.
 			case 8:												// 
 				//IIC2C_MST = 0;									// Send a stop (go to slave mode)
+				delay(60);
 				IIC2C1_MST = 0;								// Send a stop (go to slave mode)
 				//IIC2C1_RSTA = 1;								// Send a repeat start.
 				if (prev_st == 7)
@@ -399,16 +446,18 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 					i2c_state = 1;								// send start bit 
 				else if (prev_st == 19)
 				{
-					//ste_out.done = 1;							// Finish.
-					//rd_byte_cntr = 0;							// Reset.
+					/*ste_out.done = 1;							// Finish.
+					rd_byte_cntr = 0;							// Reset.*/
 				}
 				break;
 			/**************************/
 			// Wait for device to wake up.
 			case 9:												// 
-				delay(2);										// Delay ms.
+				//delay(60);										// Delay ms.
 				prev_st = 9;
 				i2c_state = 1; 								// Start bit state.
+				//i2c_state = 10; 								// Start bit state.
+				//i2c_state = 2; 								// Start bit state.
 				break;
 			/***************************/
 			// Send the meas. msb command.

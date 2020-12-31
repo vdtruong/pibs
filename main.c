@@ -99,6 +99,7 @@ void main(void) {
 		while(!sens_outputs.done){				
 			sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
 		}
+		sens_outputs.done = 0;					// Reset.
 		/* Display data to 7-seg display. */
 		/* Wait until display is done. */
 		//while(!ht16k33_fsm(*(slv_addr + slv_addr_cntr), sens_outputs.data))
