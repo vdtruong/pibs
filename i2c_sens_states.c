@@ -16,7 +16,8 @@
 //enum ei2c_states i2c_fsm(char new_state);
 unsigned char *i2c_fsm(unsigned char strt);					// Function returns the pointer to the buffer array.
 /**************************/
-struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt);	// Function returns the structure. */
+//struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt);	// Function returns the structure. */
+struct Shtc3Outputs i2c_fsm_shtc3(void);						// Function returns the structure. */
 /**************************/
 
 /***** Function begins ****/
@@ -194,7 +195,8 @@ unsigned char *i2c_fsm(unsigned char strt)
 
 /***** Function begins ****/
 /* This is for the shtc3 sensor. */
-struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
+//struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
+struct Shtc3Outputs i2c_fsm_shtc3(void)
 {
 	static unsigned short int i2c_state = 1;		// Go to state 1.
 	static unsigned short int prev_st = 0;			// Previous state.
@@ -218,7 +220,8 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 														0x00 	// read r.h. crc			9		6
 														};		
 	static struct Shtc3Outputs ste_out;				// state machine outputs
-	
+	unsigned char done = 0;
+
 	ste_out.done = 0;
 
 	/*		
@@ -246,7 +249,7 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 		19	I2C_SND_SLEEP_CMD_LSB
 	*/
 
-	while(!ste_out.done)
+	while(!done)
 	{
 		/*if (strt)
 		{
@@ -302,15 +305,16 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 			case 3:												// i2c_start
 				//while(!IIC2S_TCF);							// Wait until transmission is done.
 				//IIC2D = *(i2c_buffer + 0);					// Send the addr. field with WR bit set (R/W = WR).
-				delay(20);										// Delay 20 ms.
+				delay(2400);									// Delay
 				prev_st = 3;
-				i2c_state = 4; 								// next state
+				//i2c_state = 4; 								// next state
+				i2c_state = 8;									// Send stop bit.
 				break;
 			/***************************/
 			// Send a start condition with receive set.
 			case 4:												// i2c_start
 				//IIC2C = 0xb0;									// Send the start bit.
-				IIC2C1_TX = 0;									// Set for receive.
+				IIC2C1_TX = 1;									// Set for transmit.
 				IIC2C1_MST = 1;								// Set for master transmit.
 				/*if (prev_st == 0 || prev_st == 9 || prev_st == 16)
 					i2c_state = 2; 							// send dev. addr with wr bit.
@@ -326,18 +330,24 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 					i2c_state = 6;								// Go to wakeup cmd msb.
 				else if (prev_st == 6)
 					i2c_state = 7;								// Go to wakeup cmd lsb
-				else if (prev_st == 7 || prev_st == 11 || prev_st == 19)
-					i2c_state = 8;								// Send stop bit state.
+				//else if (prev_st == 7 || prev_st == 11 || prev_st == 19)
+				//	i2c_state = 8;								// Send stop bit state.
+				else if (prev_st == 7)
+					i2c_state = 9;								// Wait for wake up.
 				else if (prev_st == 9)
 					i2c_state = 10;							// send meas. command msb
 				else if (prev_st == 10)
 					i2c_state = 11;							// send meas. command lsb
+				else if (prev_st == 11) 
+					i2c_state = 3;								// Wait for measurement.
 				else if (prev_st == 12)
 					i2c_state = 13;							// wait for read to start 
 				else if (prev_st == 16)
 					i2c_state = 18;							// send sleep command msb
 				else if (prev_st == 18)
 					i2c_state = 19;							// send sleep command lsb
+				else if (prev_st == 19)
+					i2c_state = 8;								// Send stop bit state.
 				break;
 			/***************************/
 			// Query for ACK response from slave.
@@ -437,27 +447,37 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 			// Send a stop and go to slave mode.
 			case 8:												// 
 				//IIC2C_MST = 0;									// Send a stop (go to slave mode)
-				delay(60);
+				//delay(60);
 				IIC2C1_MST = 0;								// Send a stop (go to slave mode)
 				//IIC2C1_RSTA = 1;								// Send a repeat start.
-				if (prev_st == 7)
-					i2c_state = 9;								// Wait for device to wake up.
-				else if (prev_st == 11 || prev_st == 16)
-					i2c_state = 1;								// send start bit 
+				//if (prev_st == 7)
+				//	i2c_state = 9;								// Wait for device to wake up.
+				if (prev_st == 3)
+					i2c_state = 4;								// Send start bit with receive mode.
+				else if (prev_st == 9)
+					i2c_state = 1;								// Send start bit.
+				//else if (prev_st == 11 || prev_st == 16)
+				//	i2c_state = 1;								// send start bit 
+				else if (prev_st == 16)
+					i2c_state = 1;								// Send start bit with tx mode.
 				else if (prev_st == 19)
 				{
-					/*ste_out.done = 1;							// Finish.
-					rd_byte_cntr = 0;							// Reset.*/
+					ste_out.done = 1;							// Finish.
+					done = 1;
+					//rd_byte_cntr = 0;							// Reset.
+					//i2c_state = 1;								// Send start bit with tx mode.
+					//prev_st = 0;								// Reset.
 				}
 				break;
 			/**************************/
 			// Wait for device to wake up.
 			case 9:												// 
-				//delay(60);										// Delay ms.
+				delay(60);										// Delay.
 				prev_st = 9;
-				i2c_state = 1; 								// Start bit state.
+				//i2c_state = 1; 								// Start bit state.
 				//i2c_state = 10; 								// Start bit state.
 				//i2c_state = 2; 								// Start bit state.
+				i2c_state = 8;
 				break;
 			/***************************/
 			// Send the meas. msb command.
@@ -487,6 +507,7 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 			// Wait for device to finish meas.
 			case 13:												// 
 				//delay(13);										// Delay 13 ms.
+				IIC2C1_TX = 0;									// Change to read mode.
 				prev_st = 13;
 				i2c_state = 15; 								// Start to read data.
 				break;
@@ -531,7 +552,7 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 				while(!IIC2S_TCF);							// Wait until transmission is done.
 				IIC2C1_TXAK = 0;								// Send ACK.
 				//delay(10);										// Wait 10 ms.
-				if (rd_byte_cntr < 6)						// If has not read 6 bytes yet.
+				if (rd_byte_cntr < 7)						// If has not read 6 bytes yet.
 					i2c_state = 15;
 				else
 					i2c_state = 8;								// Send stop bit;
@@ -559,6 +580,7 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 				IIC2D = *(i2c_buffer + 7);					// Send the meas. lsb command.
 				prev_st = 19;
 				i2c_state = 8; 								// I2C_ACK_QRY;			// next state
+				done = 1;
 				break;
 			/***************************/
 		} 	/* switch */

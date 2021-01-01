@@ -67,7 +67,8 @@ void main(void) {
 	static struct Shtc3Outputs sens_outputs;
 	static unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
 	static unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
-	
+	static unsigned char capt_done = 0;
+
 	sens_outputs.done = 0;
   	
   	initDevice();
@@ -96,10 +97,16 @@ void main(void) {
 		// tca_done = tca9548a_fsm(cntrl_reg);
 		//while(!tca9548a_fsm(cntrl_reg));		/* Wait until the switch is done. */
 		/* Capture temperature data. */
-		while(!sens_outputs.done){				
-			sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
-		}
-		sens_outputs.done = 0;					// Reset.
+		//while(!sens_outputs.done){				
+		//while(!capt_done){				
+		//	sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
+		//	capt_done = sens_outputs.done;
+		//}
+		//sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
+		i2c_fsm_shtc3();
+		delay(50);
+		//sens_outputs.done = 0;					// Reset.
+		//capt_done = 0;
 		/* Display data to 7-seg display. */
 		/* Wait until display is done. */
 		//while(!ht16k33_fsm(*(slv_addr + slv_addr_cntr), sens_outputs.data))
