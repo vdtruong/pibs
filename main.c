@@ -55,24 +55,25 @@ void main(void) {
   	/*count = 0;
   	labelCnt = 0;
   	lcdUpdate = 0;
-  	cnt2 = 0;
+  	nt2 = 0;
   	cnt3 = 0;
   	row = 0;
   	col = 0;
   	flag = 0;
   	*/
 
-	static unsigned char cntrl_reg = 0;																		/* Set the counter for the tca9548a. */
-	static unsigned char tca_done = 0;
-	static struct Shtc3Outputs sens_outputs;
-	static unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
-	static unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
-	static unsigned char capt_done = 0;
+	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
+	unsigned char tca_done = 0;
+	struct Shtc3Outputs sens_outputs;
+	unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
+	unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
+	unsigned char capt_done = 0;
+	unsigned char strt = 1;
 
 	sens_outputs.done = 0;
   	
   	initDevice();
-  	delay(1);						// 1 ms
+  	delay(1);						// Wait
 	//initHt16k33();
 
 	/*
@@ -103,8 +104,8 @@ void main(void) {
 		//	capt_done = sens_outputs.done;
 		//}
 		//sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
-		i2c_fsm_shtc3();
-		delay(50);
+		//i2c_fsm_shtc3();
+		//delay(1050);
 		//sens_outputs.done = 0;					// Reset.
 		//capt_done = 0;
 		/* Display data to 7-seg display. */
@@ -122,12 +123,12 @@ void main(void) {
     	display_out(activate_digit, activate_all_direct);     
 		*/
 
-		/*while(!sens_outputs.done){				
-			sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
-		/*	}
-		delay(1);
+		while(!sens_outputs.done){				
+			sens_outputs = i2c_fsm_shtc3(strt);	/* Capture temp. sensor data. */
+		}
+		delay(1000);
 		sens_outputs.done = 0;
-		*/
+		strt = 1;
 
     	//contUpdate(); /* for all updates */  
     	//sciComm();    /* comm. with labview */
