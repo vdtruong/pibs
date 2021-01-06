@@ -52,17 +52,7 @@
 
 void main(void) { 
   
-  	/*count = 0;
-  	labelCnt = 0;
-  	lcdUpdate = 0;
-  	nt2 = 0;
-  	cnt3 = 0;
-  	row = 0;
-  	col = 0;
-  	flag = 0;
-  	*/
-
-	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
+  	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
 	unsigned char tca_done = 0;
 	struct Shtc3Outputs sens_outputs;
 	unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
@@ -72,9 +62,9 @@ void main(void) {
 
 	sens_outputs.done = 0;
   	
-  	initDevice();
-  	delay(1);						// Wait
-	//initHt16k33();
+  	initDevice();						// Initialize microcontroller.
+  	delay(1000);						// Wait
+	initHt16k33();						// Initialize 7-seg displays.
 
 	/*
 	EnableInterrupts; // enable interrupts
@@ -123,14 +113,15 @@ void main(void) {
     	display_out(activate_digit, activate_all_direct);     
 		*/
 
+		/* This part works for shtc3 measurement.
 		while(!sens_outputs.done){				
-			sens_outputs = i2c_fsm_shtc3(strt);	/* Capture temp. sensor data. */
+			sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
 		}
 		delay(1000);
 		sens_outputs.done = 0;
 		strt = 1;
+		*/
 
-    	//contUpdate(); /* for all updates */  
     	//sciComm();    /* comm. with labview */
   
   } 	/* loop forever */

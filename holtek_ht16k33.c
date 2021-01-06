@@ -8,34 +8,144 @@
 	to the 7-seg display.
 */
 
-//#include "mc9s08qe128.h"
-
-/* Function prototype(s). */
+/* Function prototypes. */
+void initHt16k33(void);
 // Inputs: address of 7-seg display, pointer to temp. data array
 unsigned char ht16k33_fsm(unsigned char slav_addr, unsigned char *data);	
 /**************************/
 
 /***** Function begins ****/
+/* This function initialize all holtek displays. */
+/* We have eight 7-seg displays. */
+void initHt16k33(void){
+	/* Initialize all displays. 
+	 * Send four init. commands to each 
+	 * display.  The displays use iic1 for main board.
+	 	It uses iic2 for dev. board. */
+	unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
+	unsigned char cmd_codes[4] = {0x21, 0xa0, 0xe7, 0x80}; 								/* osc, row_output, dim, blink */
+	unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
+	unsigned char cmd_code_cntr = 0;																/* There are four command codes. */
+	unsigned char done_slv_addr = 0;																/* When done sending initialization for each display. */
+	unsigned char done_cmd_code = 0;																/* When done sending init. command code. */
+	unsigned short int i2c_state = 1;															// Go to state 1.
+	unsigned short int prev_st = 0;																// Previous state.
+	unsigned char done_tx = 0;																		// Finish transmitting command.
+
+	/* Use iic2 for dev. board. */
+	while(!done_slv_addr)
+	{
+		while(!done_cmd_code)
+		{
+			while(!done_tx)
+			{
+				switch(i2c_state)
+				{
+					/***************************/
+					// I2C in idle state.
+					case 0:														// i2c_idl
+						prev_st = 0;											// Set previous state.
+						break;
+					/***************************/
+					// Send a start condition.
+					case 1:														// i2c_start
+						IIC2C1_TX = 1;											// Set for transmit.
+						IIC2C1_MST = 1;										// Set for master transmit.
+						i2c_state = 2; 										// send dev. addr with wr bit.
+						break;
+					/***************************/
+					// Send a device address and write bit before wake command.
+					case 2:														// i2c_start
+						while(!IIC2S_TCF);									// Wait until transmission is done.  Wait for any transfer to complete.
+						IIC2D       = *(slv_addr + 2); 			// send addr. data; lsb is dir. of slave
+						//IIC2D       = *(slv_addr + slv_addr_cntr);	// send addr. data; lsb is dir. of slave
+						i2c_state = 5; 										// I2C_ACK_QRY;			// next state
+						break;
+					/***************************/
+					// Wait before sending stop bit.
+					case 3:														// 
+						delay(20);												// Delay (200 ~ 1 ms, 20 ~ 122 us)
+						prev_st = 3;
+						i2c_state = 8;											// Send stop bit.
+						break;
+					/***************************/
+					// Send a start condition with receive set.
+					case 4:														// i2c_start
+						IIC2C1_TX = 1;											// Set for transmit.
+						IIC2C1_MST = 1;										// Set for master transmit.
+						prev_st = 4;
+						i2c_state = 12;										// send dev. addr with rd bit.
+						break;
+					/***************************/
+					// Query for ACK response from slave.
+					case 5: 														// I2C_ACK_QRY;
+						if (prev_st == 0)										// If previous state is 0.
+							i2c_state = 6;										// Go to command code.
+						else if (prev_st == 6)
+							i2c_state = 3;										// Go to wait.
+						break;
+					/***************************/
+					// Send command code.
+					case 6:												
+						while(!IIC2S_TCF);									// Wait until transmission is done.
+						IIC2D = *(cmd_codes + cmd_code_cntr);			// send command code
+		  				prev_st = 6;
+						i2c_state = 5; 										// I2C_ACK_QRY;			// next state
+						break;
+					/***************************/
+					// Send a stop and go to slave mode.
+					case 8:												 
+						IIC2C1_MST = 0;										// Send a stop (go to slave mode)
+						done_tx = 1;											// Finished.
+						break;
+					/**************************/
+				}	// switch
+			}		// done_tx
+			cmd_code_cntr += 1;												// Move to next command.
+			if (cmd_code_cntr > 3)
+			//if (cmd_code_cntr > 0)
+				done_cmd_code = 1;											// Done sending commands.
+			else
+			{
+				delay(40);														// Wait before sending another command.
+				done_tx = 0;													// Re-enter loop.
+				prev_st = 0;													// Reset
+				i2c_state = 1;													// Reset
+			}
+		}			// done_cmd_code
+		slv_addr_cntr += 1;													// Move to next display.
+		//if (slv_addr_cntr > 7)
+		if (slv_addr_cntr > 0)
+			done_slv_addr = 1;												// Done with all displays.
+		else
+		{
+			delay(40);														// Wait before sending another command.
+			done_cmd_code = 0;											// Re-enter loop.
+			done_tx = 0;													// Re-enter loop.
+			prev_st = 0;													// Reset
+			i2c_state = 1;													// Reset
+		}
+	}				// done_slv_addr
+
+}
 /* This is for the holtek ht16k33 7-seg display. */
-/* The data array contains data from the shtc3 sensor.
- 	The data is in this order [rh_msb, rh_lsb, rh_crc, t_msb, t_lsb, t_crc]. */
 unsigned char ht16k33_fsm(unsigned char slav_addr, unsigned char *data)
 {
-	static unsigned char done_sm = 0;				// Indicates if state machine is done.
-	static unsigned char addr_indx = 0;				// Address of the com channel.
-	static unsigned char digit_data = 0;			// Data for each digit of the 7-seg display.
-	static unsigned char i2c_state = 0;				// State machine index.
-	static unsigned char prev_st = 0;				// Previous state of state machine.
-	static unsigned char b = 0;
-	static unsigned char done = 0;
-	static float a = 0.0, c = 0.0, d = 0.0,  diff = 0.0;
-	static unsigned char cntr = 0;
-	static unsigned char disp_dig_indx[3];			/* Digits indexes for the display. */
-	static unsigned char dspl_dig[4];				// Display digits array for 7-seg. 
-	static unsigned int temp_raw = 0;
-	static float temp_f = 0.0;							// temperature in farenheit.
-	static float temp_c = 0.0;							// temperature in celsius. 
-	static unsigned char i2c_buffer[10]= 	{
+	unsigned char done_sm = 0;							// Indicates if state machine is done.
+	unsigned char addr_indx = 0;						// Address of the com channel.
+	unsigned char digit_data = 0;						// Data for each digit of the 7-seg display.
+	unsigned char i2c_state = 0;						// State machine index.
+	unsigned char prev_st = 0;							// Previous state of state machine.
+	unsigned char b = 0;
+	unsigned char done = 0;
+	float a = 0.0, c = 0.0, d = 0.0,  diff = 0.0;
+	unsigned char cntr = 0;
+	unsigned char disp_dig_indx[3];					/* Digits indexes for the display. */
+	unsigned char dspl_dig[4];							// Display digits array for 7-seg. 
+	unsigned int temp_raw = 0;
+	float temp_f = 0.0;									// temperature in farenheit.
+	float temp_c = 0.0;									// temperature in celsius. 
+	unsigned char i2c_buffer[10]= 	{
 														0xEE,	// Send addr. and write. 	0	
 														0x35,	// Wakeup command msb		1
 														0x17,	// Wakeup command lsb		2

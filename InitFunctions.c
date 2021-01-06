@@ -15,7 +15,7 @@ void iic2Init(void);
 void GPIO_Init(void);
 void initDevice(void);
 //void initFuncts(void);
-void initHt16k33(void);
+//void initHt16k33(void);
 /***********************/
 
 
@@ -83,18 +83,18 @@ void GPIO_Init(void) {
   	/* For demo board, do not use ptb for iic. */
 	//PTBPE = 0xC0; 						// enable pull ups on PTB7 and PTB6 pins for iic1, port B, 7-seg displays
 }
-void initHt16k33(void){
+//void initHt16k33(void){
 	/* Initialize all displays. 
 	 * Send four init. commands to each 
 	 * display.  The displays use iic1. */
-	unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
-	unsigned char cmd_codes[4] = {0x21, 0xa0, 0xe7, 0x80}; 								/* osc, row_output, dim, blink */
-	unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
-	unsigned char cmd_code_cntr = 0;																/* There are four command codes. */
-	unsigned char done_slv_addr = 0;																/* When done sending initialization for each display. */
-	unsigned char done_cmd_code = 0;																/* When done sending init. command code. */
+//	unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
+//	unsigned char cmd_codes[4] = {0x21, 0xa0, 0xe7, 0x80}; 								/* osc, row_output, dim, blink */
+//	unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
+//	unsigned char cmd_code_cntr = 0;																/* There are four command codes. */
+//	unsigned char done_slv_addr = 0;																/* When done sending initialization for each display. */
+//	unsigned char done_cmd_code = 0;																/* When done sending init. command code. */
 
-	while(!done_slv_addr){
+/*	while(!done_slv_addr){
 		while(!done_cmd_code){
 			IIC1C1_TX   =	 1; 									// set TX bit for Addr. cycle
   			IIC1C1_MST  = 1;    									// set master bit to generate a Start
@@ -116,7 +116,7 @@ void initHt16k33(void){
 		if (slv_addr_cntr > 8)
 			done_slv_addr = 1;
 	}
-}
+}*/
 void initDevice(void){
   	MCU_Init();       											// initializes the MCU
   	GPIO_Init();      											// initializes GPIO
