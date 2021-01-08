@@ -31,7 +31,6 @@
 
 
 #include <hidef.h>      /* for EnableInterrupts macro */
-//#include "MiscFunctions.c"
 #include "derivative.h" /* include peripheral declarations */
 #include "display.h"
 #include "eepromglobals.h"
@@ -62,18 +61,10 @@ void main(void) {
 
 	sens_outputs.done = 0;
   	
-  	initDevice();						// Initialize microcontroller.
-  	delay(1000);						// Wait
-	initHt16k33();						// Initialize 7-seg displays.
-	//ht16k33_single_cmd_wr(0xe4, 0x21);			// Set slav_2, oscillator.
-	//delay(20);
-	//ht16k33_single_cmd_wr(0xe4, 0xa0);			// Set slav_2, row to outputs.
-	//delay(20);
-	//ht16k33_single_cmd_wr(0xe4, 0xe7);			// Set slav_2, duty cycle.
-	//delay(20);
-	//ht16k33_single_cmd_wr(0xe4, 0x80);			// Set slav_2, blinking.
-	//delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x00, 0x4f);	// Set slav_2, digit 0, value .
+  	initDevice();										// Initialize microcontroller.
+  	delay(1000);										// Wait
+	initHt16k33();										// Initialize 7-seg displays.
+	ht16k33_single_dat_wr(0xe4, 0x00, 0x66);	// Set slav_2, digit 0, value .
 	delay(20);
 	ht16k33_single_dat_wr(0xe4, 0x02, 0x86);	// Set slav_2, digit 1, value .
 	delay(20);
@@ -83,17 +74,7 @@ void main(void) {
 	delay(20);
 	ht16k33_single_cmd_wr(0xe4, 0x81);			// Turn on the display.
 	
-	/*
-	EnableInterrupts; // enable interrupts
-  	ADCSC1_AIEN = 1;  // Enable ADC interrupt
-  	APCTL1_ADPC0 = 1; // 1-analog, 0-digital
-  	*/
-
-  	//i2c1MstrStart(LCDSLAVE,0); /* initialize LCD display */              
-  	//delay(20000);
-	//dsplyLabel(); 					// for LCD labels
-
-  	for(;;) {
+	for(;;) {
   		
 		/*IIC2C1_TX = 1;		// SEt fror transmit.
 		IIC2C1_MST = 1;	// Set for master start bit.
@@ -144,5 +125,4 @@ void main(void) {
   } 	/* loop forever */
   		/* please make sure that you never leave main */
 }
-
 

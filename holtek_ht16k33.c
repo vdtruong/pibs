@@ -241,18 +241,6 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data)
 	unsigned int temp_raw = 0;
 	float temp_f = 0.0;									// temperature in farenheit.
 	float temp_c = 0.0;									// temperature in celsius. 
-	/*unsigned char i2c_buffer[10]= 			{
-														0xEE,	// Send addr. and write. 	0	
-														0x35,	// Wakeup command msb		1
-														0x17,	// Wakeup command lsb		2
-														0x5C,	// Meas. command msb			3 	0
-														0x24,	// Meas. command lsb			4	1
-														0xE1,	// Send addr. read			5	2
-														0xB0, // Sleep command msb			6	3
-														0x98,	// Sleep command lsb			7	4
-														0x00,	// read r.h. data.			8	5
-														0x00 	// read r.h. crc				9	6
-														};*/
 	unsigned char disp_dig_lut[13] = 		{		// display look up table
 			  											0x3f,	// 0
 														0x06,	// 1
@@ -268,7 +256,7 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data)
 														0x79, // e
 														0x71 	// f
 														};	
-	unsigned char disp_dig_lut_dp[13] = 	{	// with decimal point
+	unsigned char disp_dig_lut_dp[13] = 	{		// with decimal point
 			  											0xbf,	// 0
 														0x86,	// 1
 														0xdb,	// 2
@@ -346,5 +334,4 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data)
 	ht16k33_single_cmd_wr(des_addr, 0x81);																	// Turn on the display.
 	
 	return (done_dspl);
-
 }
