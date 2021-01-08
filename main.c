@@ -65,7 +65,24 @@ void main(void) {
   	initDevice();						// Initialize microcontroller.
   	delay(1000);						// Wait
 	initHt16k33();						// Initialize 7-seg displays.
-
+	//ht16k33_single_cmd_wr(0xe4, 0x21);			// Set slav_2, oscillator.
+	//delay(20);
+	//ht16k33_single_cmd_wr(0xe4, 0xa0);			// Set slav_2, row to outputs.
+	//delay(20);
+	//ht16k33_single_cmd_wr(0xe4, 0xe7);			// Set slav_2, duty cycle.
+	//delay(20);
+	//ht16k33_single_cmd_wr(0xe4, 0x80);			// Set slav_2, blinking.
+	//delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x00, 0x4f);	// Set slav_2, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x02, 0x86);	// Set slav_2, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x06, 0x06);	// Set slav_2, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x08, 0x71);	// Set slav_2, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xe4, 0x81);			// Turn on the display.
+	
 	/*
 	EnableInterrupts; // enable interrupts
   	ADCSC1_AIEN = 1;  // Enable ADC interrupt
