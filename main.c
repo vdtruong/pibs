@@ -63,34 +63,47 @@ void main(void) {
   	
   	initDevice();										// Initialize microcontroller.
   	delay(1000);										// Wait
-	initHt16k33();										// Initialize 7-seg displays.
-	ht16k33_single_dat_wr(0xe4, 0x00, 0x66);	// Set slav_2, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x02, 0x86);	// Set slav_2, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x06, 0x06);	// Set slav_2, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x08, 0x71);	// Set slav_2, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xe4, 0x81);			// Turn on the display.
 	
+	//initHt16k33();										// Initialize 7-seg displays.
+	
+	/*
+	ht16k33_single_cmd_wr(0xe0, 0x21);			// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xe0, 0xa0);			// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xe0, 0xe7);			// dim
+	delay(20);
+	ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x00, 0x66);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x02, 0x86);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x06, 0x06);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x08, 0x71);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xe0, 0x81);			// Turn on the display.
+	*/
+	
+	ht16k33_test(0xe0, 1);
+	
+	//tca9548a_fsm(0xee, 1);
+
 	for(;;) {
   		
-		/*IIC2C1_TX = 1;		// SEt fror transmit.
-		IIC2C1_MST = 1;	// Set for master start bit.
-		IIC2D = 0x70;
-		//delay(1);
-		IIC2C1_MST = 0;	// Set for master stop bit.
-		*/
 		/* Switch tca to each temp. sensor. */
 		// tca_done = tca9548a_fsm(cntrl_reg);
+		
 		//while(!tca9548a_fsm(cntrl_reg));		/* Wait until the switch is done. */
 		/* Capture temperature data. */
+		
 		//while(!sens_outputs.done){				
 		//while(!capt_done){				
 		//	sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
 		//	capt_done = sens_outputs.done;
 		//}
+		
 		//sens_outputs = i2c_fsm_shtc3(1);	/* Capture temp. sensor data. */
 		//i2c_fsm_shtc3();
 		//delay(1050);
@@ -111,14 +124,14 @@ void main(void) {
     	display_out(activate_digit, activate_all_direct);     
 		*/
 
-		/* This part works for shtc3 measurement.
-		while(!sens_outputs.done){				
+		// This part works for shtc3 measurement.
+		/*while(!sens_outputs.done){				
 			sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
 		}
 		delay(1000);
 		sens_outputs.done = 0;
-		strt = 1;
-		*/
+		strt = 1;*/
+		
 
     	//sciComm();    /* comm. with labview */
   

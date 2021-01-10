@@ -8,67 +8,30 @@
 	to the 7-seg display.
 */
 
-/* Function prototypes. */
+/* Function prototypes. *****************************************************************************************/
+/* This function sends a single command write. */
+unsigned char ht16k33_single_cmd_wr(unsigned char des_addr, unsigned char cmd, unsigned char iic_chnl);
+/* This function sends a single display digit. */
+void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned char data, unsigned char iic_chnl);	
 /* This function initializes all 7-seg displays. */
-void initHt16k33(void);
+void initHt16k33(unsigned char iic_chnl);
 /* This function sends all four digits to the display. */
 // Inputs: address of 7-seg display, pointer to temp. data array
-unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data);
-/* This function sends a single command write. */
-void ht16k33_single_cmd_wr(unsigned char des_addr, unsigned char cmd);
-/* This function sends a single display digit. */
-void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned char data);	
-/**************************/
+unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned char iic_chnl);
+/* This function tests out a display. */
+void ht16k33_test (unsigned char des_addr, unsigned char iic_chnl);
+/*****************************************************************************************************************/
 
-/***** Function begins ****/
-/* This function initialize all holtek displays. */
-/* We have eight 7-seg displays. */
-void initHt16k33(void){
-	/* Initialize all displays. 
-	 * Send four init. commands to each 
-	 * display.  The displays use iic1 for main board.
-	 	It uses iic2 for dev. board. */
-	unsigned char des_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* destination address with write bit */
-	unsigned char cmd_codes[4] = {0x21, 0xa0, 0xe7, 0x80}; 								/* osc, row_output, dim, blink */
-	unsigned char des_addr_cntr = 0;																/* There are eight displays. */
-	unsigned char cmd_code_cntr = 0;																/* There are four command codes. */
-	unsigned char done_des_addr = 0;																/* When done sending initialization for each display. */
-	unsigned char done_cmd_code = 0;																/* When done sending init. command code. */
-	unsigned short int i2c_state = 1;															// Go to state 1.
-	unsigned short int prev_st = 0;																// Previous state.
-	unsigned char done_tx = 0;																		// Finish transmitting command.
-
-	/* Use iic2 for dev. board. */
-	/* Need to use iic1 for main board. */
-	while(!done_des_addr)
-	{
-		while(!done_cmd_code)
-		{
-			ht16k33_single_cmd_wr(*(des_addr + des_addr_cntr), *(cmd_codes + cmd_code_cntr));// Set init. command.
-			delay(20);
-			cmd_code_cntr += 1;																					// Move to next command.
-			if (cmd_code_cntr > 3)
-				done_cmd_code = 1;																				// Done sending commands.
-		}	// done_cmd_code
-		des_addr_cntr += 1;																						// Move to next display.
-		if (des_addr_cntr > 7)
-			done_des_addr = 1;																					// Done with all displays.
-		else
-		{
-			delay(40);																								// Wait before sending another command.
-			done_cmd_code = 0;																					// Re-enter loop.
-		}
-	}		// done_des_addr
-}
+/***** Function begins *******************************************************************************************/
 /* This function sends a single command write. */
-void ht16k33_single_cmd_wr(unsigned char des_addr, unsigned char cmd)
+unsigned char ht16k33_single_cmd_wr(unsigned char des_addr, unsigned char cmd, unsigned char iic_chnl)
 {
 	// This function sends a single write command.
 	// It uses iic2 for dev. board. 
 	unsigned short int i2c_state = 1;							// Go to state 1.
 	unsigned short int prev_st = 0;								// Previous state.
 	unsigned char done_tx = 0;										// Finish transmitting command.
-
+	
 	/* Use iic2 for dev. board. */
 	/* Need to use iic1 for main board. */
 	while(!done_tx)
@@ -83,15 +46,30 @@ void ht16k33_single_cmd_wr(unsigned char des_addr, unsigned char cmd)
 			/***************************/
 			// Send a start condition.
 			case 1:														// i2c_start
-				IIC2C1_TX = 1;											// Set for transmit.
-				IIC2C1_MST = 1;										// Set for master transmit.
+				if(iic_chnl)
+				{
+					IIC2C1_TX = 1;										// Set for transmit.
+					IIC2C1_MST = 1;									// Set for master transmit.
+				}
+				else
+				{
+					IIC1C1_TX = 1;										// Set for transmit.
+					IIC1C1_MST = 1;									// Set for master transmit.
+				}
 				i2c_state = 2; 										// send dev. addr with wr bit.
 				break;
 			/***************************/
 			// Send a device address and write bit.
 			case 2:														// i2c_start
-				while(!IIC2S_TCF);									// Wait until transmission is done.  Wait for any transfer to complete.
-				IIC2D  = des_addr; 									// send addr. data; lsb is dir. of slave
+				if(iic_chnl)
+				{
+					while(!IIC2S_TCF);								// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC2D  = des_addr; 								// send addr. data; lsb is dir. of slave
+				}
+				else
+				{	while(!IIC1S_TCF);								// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC1D  = des_addr; 								// send addr. data; lsb is dir. of slave
+				}
 				i2c_state = 5; 										// I2C_ACK_QRY;			// next state
 				break;
 			/***************************/
@@ -104,8 +82,16 @@ void ht16k33_single_cmd_wr(unsigned char des_addr, unsigned char cmd)
 			/***************************/
 			// Send a start condition with receive set.
 			case 4:														// i2c_start
-				IIC2C1_TX = 1;											// Set for transmit.
-				IIC2C1_MST = 1;										// Set for master transmit.
+				if(iic_chnl)
+				{
+					IIC2C1_TX = 1;										// Set for transmit.
+					IIC2C1_MST = 1;									// Set for master transmit.
+				}
+				else
+				{
+					IIC1C1_TX = 1;										// Set for transmit.
+					IIC1C1_MST = 1;									// Set for master transmit.
+				}
 				prev_st = 4;
 				i2c_state = 12;										// send dev. addr with rd bit.
 				break;
@@ -120,28 +106,43 @@ void ht16k33_single_cmd_wr(unsigned char des_addr, unsigned char cmd)
 			/***************************/
 			// Send command code.
 			case 6:												
-				while(!IIC2S_TCF);									// Wait until transmission is done.
-				IIC2D = cmd;											// send command code
-		  		prev_st = 6;
+				if(iic_chnl)
+				{
+					while(!IIC2S_TCF);								// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC2D  = cmd; 										// send addr. data; lsb is dir. of slave
+				}
+				else
+				{	while(!IIC1S_TCF);								// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC1D  = cmd; 										// send addr. data; lsb is dir. of slave
+				}
+				prev_st = 6;
 				i2c_state = 5; 										// I2C_ACK_QRY;			// next state
 				break;
 			/***************************/
 			// Send a stop and go to slave mode.
 			case 8:												 
-				IIC2C1_MST = 0;										// Send a stop (go to slave mode)
+				if(iic_chnl)
+				{
+					IIC2C1_MST = 0;									// Set for master transmit.
+				}
+				else
+				{
+					IIC1C1_MST = 0;									// Set for master transmit.
+				}
 				done_tx = 1;											// Finished.
 				break;
 			/**************************/
 		}	// switch
 	}		// done_tx
+	return(done_tx);
 }
 /* This function sends a command and a data. */
-void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned char data)
+void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned char data, unsigned char iic_chnl)
 {
 	unsigned char done_sm = 0;							// Indicates if state machine is done.
 	unsigned char i2c_state = 1;						// Next state machine index.
 	unsigned char prev_st = 0;							// Previous state of state machine.
-		
+	
 	/*	i2c_states:
 		
 		0	I2C_IDLE
@@ -170,22 +171,44 @@ void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned c
 			/***************************/
 			// Send a start condition.
 			case 1:											// i2c_start
-				IIC2C1_TX = 1;								// Set for transmit.
-				IIC2C1_MST = 1;							// Set for master transmit.
+				if(iic_chnl)
+				{
+					IIC2C1_TX = 1;							// Set for transmit.
+					IIC2C1_MST = 1;						// Set for master transmit.
+				}
+				else
+				{
+					IIC1C1_TX = 1;							// Set for transmit.
+					IIC1C1_MST = 1;						// Set for master transmit.
+				}
 				i2c_state = 2;								// send dev. addr with wr bit.
 				break;
 			/***************************/
 			// Send a device address and write bit.
 			case 2:											// 
-				while(!IIC2S_TCF);						// Wait until transmission is done.  Wait for any transfer to complete.
-				IIC2D = des_addr;							// Send the addr. field with WR bit set (R/W = WR).
+				if(iic_chnl)
+				{
+					while(!IIC2S_TCF);					// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC2D  = des_addr;					// send addr. data; lsb is dir. of slave
+				}
+				else
+				{	while(!IIC1S_TCF);					// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC1D  = des_addr;					// send addr. data; lsb is dir. of slave
+				}
 				i2c_state = 5; 							// I2C_ACK_QRY;			// next state 
 				break;
 			/***************************/
 			// Send command.
 			case 3:											// 
-				while(!IIC2S_TCF);						// Wait until transmission is done.
-				IIC2D = cmd;								// Send the digital address (com address).
+				if(iic_chnl)
+				{
+					while(!IIC2S_TCF);					// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC2D  = cmd; 							// send addr. data; lsb is dir. of slave
+				}
+				else
+				{	while(!IIC1S_TCF);					// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC1D  = cmd; 							// send addr. data; lsb is dir. of slave
+				}
 				prev_st = 3;
 				i2c_state = 5; 							// go to ack query			
 				break;
@@ -202,8 +225,15 @@ void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned c
 			/***************************/
 			// Send data.
 			case 6:											// 
-				while(!IIC2S_TCF);						// Wait until transmission is done.
-				IIC2D = data;								// Send the digit data
+				if(iic_chnl)
+				{
+					while(!IIC2S_TCF);					// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC2D  = data; 						// send addr. data; lsb is dir. of slave
+				}
+				else
+				{	while(!IIC1S_TCF);					// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC1D  = data;							// send addr. data; lsb is dir. of slave
+				}
 				prev_st = 6;								// 
 				i2c_state = 5; 							// 
 				break;
@@ -216,16 +246,83 @@ void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned c
 			/**************************/
 			// Send a stop and go to slave mode.
 			case 8:												 
-				IIC2C1_MST = 0;							// Send a stop (go to slave mode)
+				if(iic_chnl)
+				{
+					IIC2C1_MST = 0;						// Set for master transmit.
+				}
+				else
+				{
+					IIC1C1_MST = 0;						// Set for master transmit.
+				}
 				done_sm = 1;								// Finished.
 				break;
 			/**************************/
 		}														// switch
 	}															// while
 }
+/* This function initialize all holtek displays. */
+/* We have eight 7-seg displays. */
+void initHt16k33(unsigned char iic_chnl){
+	/* Initialize all displays. 
+	 * Send four init. commands to each 
+	 * display.  The displays use iic1 for main board.
+	 	It uses iic2 for dev. board. */
+	unsigned char des_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* destination address with write bit */
+	unsigned char cmd_codes[4] = {0x21, 0xa0, 0xe7, 0x80}; 								/* osc, row_output, dim, blink */
+	unsigned char des_addr_cntr = 0;																/* There are eight displays. */
+	unsigned char cmd_code_cntr = 0;																/* There are four command codes. */
+	unsigned char done_des_addr = 0;																/* When done sending initialization for each display. */
+	unsigned char done_cmd_code = 0;																/* When done sending init. command code. */
+	unsigned short int i2c_state = 1;															// Go to state 1.
+	unsigned short int prev_st = 0;																// Previous state.
+	unsigned char done_tx = 0;																		// Finish transmitting command.
+
+	/* Use iic2 for dev. board. */
+	/* Need to use iic1 for main board. */
+	while(!done_des_addr)
+	{
+		while(!done_cmd_code)
+		{
+			ht16k33_single_cmd_wr(*(des_addr + des_addr_cntr), *(cmd_codes + cmd_code_cntr), iic_chnl);	// Set init. command.
+			delay(20);
+			cmd_code_cntr += 1;																									// Move to next command.
+			if (cmd_code_cntr > 3)
+				done_cmd_code = 1;																								// Done sending commands.
+		}	// done_cmd_code
+		des_addr_cntr += 1;																										// Move to next display.
+		if (des_addr_cntr > 7)
+			done_des_addr = 1;																									// Done with all displays.
+		else
+		{
+			delay(40);																												// Wait before sending another command.
+			done_cmd_code = 0;																									// Re-enter loop.
+		}
+	}		// done_des_addr
+}
+/* This function tests out the holtek display. */
+void ht16k33_test(unsigned char des_addr, unsigned char iic_chnl)
+{
+	ht16k33_single_cmd_wr(des_addr, 0x21, iic_chnl);			// osc
+	delay(20);
+	ht16k33_single_cmd_wr(des_addr, 0xa0, iic_chnl);			// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(des_addr, 0xe7, iic_chnl);			// dim
+	delay(20);
+	ht16k33_single_cmd_wr(des_addr, 0x80, iic_chnl);			// blink
+	delay(20);
+	ht16k33_single_dat_wr(des_addr, 0x00, 0x6f, iic_chnl);	// Set des_addr, value.
+	delay(20);
+	ht16k33_single_dat_wr(des_addr, 0x02, 0x86, iic_chnl);	// Set des_addr, value .
+	delay(20);
+	ht16k33_single_dat_wr(des_addr, 0x06, 0x06, iic_chnl);	// Set des_addr, value .
+	delay(20);
+	ht16k33_single_dat_wr(des_addr, 0x08, 0x71, iic_chnl);	// Set des_addr, value .
+	delay(20);
+	ht16k33_single_cmd_wr(des_addr, 0x81, iic_chnl);			// Turn on the display.
+}	
 /* This is for the holtek ht16k33 7-seg display. */
 /* It will display the four digits of each display. */
-unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data)
+unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned char iic_chnl)
 {
 	unsigned char done_dspl = 0;						// Indicates done with display.
 	unsigned char addr_indx = 0;						// Address of the com channel.
@@ -304,7 +401,7 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data)
 			if (cntr > 2)
 			{
 				done = 1;
-				*(dspl_dig + cntr) = *(disp_dig_lut + 12);												// Unit F digit.  
+				*(dspl_dig + cntr) = *(disp_dig_lut + 12);															// Unit F digit.  
 				cntr = 0;
 			}
 			else
@@ -322,16 +419,16 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data)
 	/* Now send the display digit. */
 	while(!done_dspl)
 	{
-		ht16k33_single_dat_wr(des_addr, *(digit_addr + addr_indx), *(dspl_dig + addr_indx));// Set des_2, digit n, value m.
+		ht16k33_single_dat_wr(des_addr, *(digit_addr + addr_indx), *(dspl_dig + addr_indx), iic_chnl);// Set des_2, digit n, value m.
 		delay(40);
 		// Decide if done.
-		if (addr_indx == 3)
-			done_dspl = 1;																							// done with digit
+		if (addr_indx == 3)	
+			done_dspl = 1;																										// done with digit
 		else 
-			addr_indx += 1;																						// Move to the next digit.
+			addr_indx += 1;																									// Move to the next digit.
 	}
 	/**************************/
-	ht16k33_single_cmd_wr(des_addr, 0x81);																	// Turn on the display.
+	ht16k33_single_cmd_wr(des_addr, 0x81, iic_chnl);																// Turn on the display.
 	
 	return (done_dspl);
 }
