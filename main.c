@@ -54,17 +54,17 @@ void main(void) {
   	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
 	unsigned char tca_done = 0;
 	struct Shtc3Outputs sens_outputs;
-	unsigned char slv_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* slave address with write bit */
-	unsigned char slv_addr_cntr = 0;																/* There are eight displays. */
+	unsigned char des_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* destination address with write bit */
+	unsigned char des_addr_cntr = 0;																/* There are eight displays. */
 	unsigned char capt_done = 0;
 	unsigned char strt = 1;
 
 	sens_outputs.done = 0;
   	
   	initDevice();										// Initialize microcontroller.
-  	delay(1000);										// Wait
+  	delay(40);											// Wait
 	
-	//initHt16k33();										// Initialize 7-seg displays.
+	//initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
 	
 	/*
 	ht16k33_single_cmd_wr(0xe0, 0x21);			// osc
@@ -85,16 +85,65 @@ void main(void) {
 	delay(20);
 	ht16k33_single_cmd_wr(0xe0, 0x81);			// Turn on the display.
 	*/
-	
-	ht16k33_test(0xe0, 1);
+
+	// This works.
+	ht16k33_test(0xe0, 0);	// Test display 1.
+	delay(50);
+	ht16k33_test(0xe2, 0);	// Test display 2.
+	delay(50);
+	ht16k33_test(0xe4, 0);	// Test display 3.
+	delay(50);
+	ht16k33_test(0xe6, 0);	// Test display 4.
+	delay(50);
+	ht16k33_test(0xe8, 0);	// Test display 5.
+	delay(50);
+	ht16k33_test(0xea, 0);	// Test display 6.
+	delay(50);
+	ht16k33_test(0xec, 0);	// Test display 7.
+	delay(50);
+	ht16k33_test(0xee, 0);	// Test display 8.
+	delay(50);
 	
 	//tca9548a_fsm(0xee, 1);
+
+	// This works.
+	/* Switch tca to each temp. sensor. */
+	/*tca_done = tca9548a_fsm(0xee, 1, 1);
+	delay(20);
+	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
+	delay(50);
+	tca_done = tca9548a_fsm(0xee, 2, 1);
+	delay(20);
+	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
+	delay(50);
+	tca_done = tca9548a_fsm(0xee, 3, 1);
+	delay(20);
+	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
+	delay(50);
+	tca_done = tca9548a_fsm(0xee, 4, 1);
+	delay(20);
+	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
+	delay(50);
+	tca_done = tca9548a_fsm(0xee, 5, 1);
+	delay(20);
+	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
+	delay(50);
+	tca_done = tca9548a_fsm(0xee, 6, 1);
+	delay(20);
+	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
+	delay(50);
+	tca_done = tca9548a_fsm(0xee, 7, 1);
+	delay(20);
+	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
+	delay(50);
+	*/
 
 	for(;;) {
   		
 		/* Switch tca to each temp. sensor. */
-		// tca_done = tca9548a_fsm(cntrl_reg);
-		
+		//tca_done = tca9548a_fsm(0xee, 1, 1);
+		//delay(20);
+
 		//while(!tca9548a_fsm(cntrl_reg));		/* Wait until the switch is done. */
 		/* Capture temperature data. */
 		
@@ -109,6 +158,7 @@ void main(void) {
 		//delay(1050);
 		//sens_outputs.done = 0;					// Reset.
 		//capt_done = 0;
+		
 		/* Display data to 7-seg display. */
 		/* Wait until display is done. */
 		//while(!ht16k33_fsm(*(slv_addr + slv_addr_cntr), sens_outputs.data))
@@ -116,22 +166,31 @@ void main(void) {
 		//if(slv_addr_cntr == 8)
 		//	slv_addr_cntr = 0;					/* Reset to first display. */
    	
-    	/* need these three functions to display 7-seg */
-    	/* continously */
-    	/*
-		display_out(duty_cycle, (byte)0x0F); 
-    	display_out(normal, all_on); 
-    	display_out(activate_digit, activate_all_direct);     
-		*/
-
-		// This part works for shtc3 measurement.
+    	// This part works for shtc3 measurement.
 		/*while(!sens_outputs.done){				
 			sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
 		}
 		delay(1000);
-		sens_outputs.done = 0;
-		strt = 1;*/
-		
+		sens_outputs.done = 1;
+		strt = 1;
+		*/
+
+		//ht16k33_test(0xe0, 0);	// Test display 1.
+		//delay(500);
+		//ht16k33_test(0xe2, 0);	// Test display 2.
+		//delay(50);
+		//ht16k33_test(0xe4, 0);	// Test display 3.
+		//delay(50);
+		//ht16k33_test(0xe6, 0);	// Test display 4.
+		//delay(50);
+		//ht16k33_test(0xe8, 0);	// Test display 5.
+		//delay(50);
+		//ht16k33_test(0xea, 0);	// Test display 6.
+		//delay(50);
+		//ht16k33_test(0xec, 0);	// Test display 7.
+		//delay(50);
+		//ht16k33_test(0xee, 0);	// Test display 8.
+		//delay(50);
 
     	//sciComm();    /* comm. with labview */
   

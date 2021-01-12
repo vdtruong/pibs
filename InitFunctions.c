@@ -23,10 +23,11 @@ void initDevice(void);
 void MCU_Init(void) {
   	SOPT1 = 0x23;     // Watchdog disabled. Stop Mode Enabled. Background Pin
                     	// enabled. RESET pin enabled
-  	//SOPT2_IIC1PS = 1; // move icc1 to port B; see 12.1.1 page 217
+  	SOPT2_IIC1PS = 1; // move icc1 to port B; see 12.1.1 page 217 and page 102.
   	//SCGC1 = 0x1D;     // Bus Clock to ADC, SCI1, iic1 and iic2 modules are enabled
-  	SCGC1 = 0x08;     // Bus Clock to iic1 and iic2 modules are enabled
-  	SCGC2 = 0x03;     // enable spi1 and spi2 modules
+  	// Don't forget to enable sci later.
+	SCGC1 = 0x0C;     // Bus Clock to iic1 and iic2 modules are enabled
+  	//SCGC2 = 0x03;     // enable spi1 and spi2 modules
 }
 /*void ADC_Init (void) {
   	ADCSC1 = 0x20; 	// Interrupt disable. Continuous conversion and channel 0
@@ -57,8 +58,8 @@ void spi1Init(void){	// for DAC
 }
 /* For demo board, iic1 is on pta. */
 void iic1Init(void){
-  	//IIC2F = 0x09;     // multiply factor of 1, SCL divider of 32, br=125k
-  	IIC2F = 0x0A;     // multiply factor of 1, SCL divider of 36, br=111.11k
+  	//IIC1F = 0x09;     // multiply factor of 1, SCL divider of 32, br=125k
+  	IIC1F = 0x0A;     // multiply factor of 1, SCL divider of 36, br=111.11k
   	//IIC1F = 0x0B;     // multiply factor of 1, SCL divider of 40, br=100k
   	//IIC1F = 0x0C;     // multiply factor of 1, SCL divider of 440, br=90.9k
   	IIC1C1_IICEN = 1; // iic is enabled
@@ -81,7 +82,7 @@ void GPIO_Init(void) {
   	PTBDD = 0x20; 						// for spi1, ptb data direction; 0-input, 1-output
   	PTHPE = 0xC0; 						// enable pull ups on PTH7 and PTH6 pins for IIC2, port H, expander and sensors
   	/* For demo board, do not use ptb for iic. */
-	//PTBPE = 0xC0; 						// enable pull ups on PTB7 and PTB6 pins for iic1, port B, 7-seg displays
+	PTBPE = 0xC0; 						// enable pull ups on PTB7 and PTB6 pins for iic1, port B, 7-seg displays
 }
 //void initHt16k33(void){
 	/* Initialize all displays. 

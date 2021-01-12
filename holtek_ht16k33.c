@@ -262,7 +262,8 @@ void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned c
 }
 /* This function initialize all holtek displays. */
 /* We have eight 7-seg displays. */
-void initHt16k33(unsigned char iic_chnl){
+void initHt16k33(unsigned char iic_chnl)
+{
 	/* Initialize all displays. 
 	 * Send four init. commands to each 
 	 * display.  The displays use iic1 for main board.
@@ -276,7 +277,30 @@ void initHt16k33(unsigned char iic_chnl){
 	unsigned short int i2c_state = 1;															// Go to state 1.
 	unsigned short int prev_st = 0;																// Previous state.
 	unsigned char done_tx = 0;																		// Finish transmitting command.
-
+	unsigned char done_digits = 0;																// Done printing all four digits.
+	unsigned char digit_addr_cntr = 0;															// Digit counter for each display.
+	unsigned char digit_addr[4]=	{
+												0x00,		// Digit 0 (com 0) 		
+												0x02,		// Digit 1 (com 1)
+												0x06,		// Digit 2 (com 3)
+												0x08		// Digit 3 (com 4), F degree label
+											};	
+	unsigned char disp_dig_lut[13] =	{			// display look up table
+			  										0x3f,	// 0
+													0x06,	// 1
+													0x5b,	// 2
+													0x4f,	// 3
+													0x66, // 4
+													0x6d, //	5
+													0x7d,	// 6
+													0x07, // 7
+													0x7f, // 8
+													0x6f, // 9
+													0x39, // c
+													0x79, // e
+													0x71 	// f
+												};	
+	
 	/* Use iic2 for dev. board. */
 	/* Need to use iic1 for main board. */
 	while(!done_des_addr)
@@ -298,6 +322,32 @@ void initHt16k33(unsigned char iic_chnl){
 			done_cmd_code = 0;																									// Re-enter loop.
 		}
 	}		// done_des_addr
+	delay(40);
+
+	done_des_addr = 0;	
+	des_addr_cntr = 0;																											// Move to next display.
+	
+	/* Write index to all digits for each display. */
+	while(!done_des_addr)
+	{
+		while(!done_digits)
+		{	// Set des_addr, digit n, value m.
+			ht16k33_single_dat_wr(*(des_addr + des_addr_cntr), *(digit_addr + digit_addr_cntr), *(disp_dig_lut + des_addr_cntr), iic_chnl);
+			delay(20);
+			// Decide if done.
+			if (digit_addr_cntr == 3)	
+				done_digits = 1;																									// done with digit
+			else 
+				digit_addr_cntr += 1;																							// Move to the next digit.
+		}	
+		ht16k33_single_cmd_wr(*(des_addr + des_addr_cntr), 0x81, iic_chnl);										// Turn on the display.
+		delay(20);
+			
+		des_addr_cntr += 1;																										// Move to next display.
+		if (des_addr_cntr > 7)
+			done_des_addr = 1;																									// Done with all displays.
+		delay(20);	
+	}
 }
 /* This function tests out the holtek display. */
 void ht16k33_test(unsigned char des_addr, unsigned char iic_chnl)
@@ -308,7 +358,7 @@ void ht16k33_test(unsigned char des_addr, unsigned char iic_chnl)
 	delay(20);
 	ht16k33_single_cmd_wr(des_addr, 0xe7, iic_chnl);			// dim
 	delay(20);
-	ht16k33_single_cmd_wr(des_addr, 0x80, iic_chnl);			// blink
+	//ht16k33_single_cmd_wr(des_addr, 0x80, iic_chnl);			// blink
 	delay(20);
 	ht16k33_single_dat_wr(des_addr, 0x00, 0x6f, iic_chnl);	// Set des_addr, value.
 	delay(20);
