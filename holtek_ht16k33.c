@@ -301,6 +301,160 @@ void initHt16k33(unsigned char iic_chnl)
 													0x71 	// f
 												};	
 	
+	/*
+	ht16k33_single_cmd_wr(0xe0, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xe0, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xe0, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x00, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x02, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x06, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe0, 0x08, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xe0, 0x81, 0);								// Turn on the display.
+	delay(50);
+	
+	ht16k33_single_cmd_wr(0xe2, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xe2, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xe2, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xe2, 0x00, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe2, 0x02, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe2, 0x06, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe2, 0x08, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xe2, 0x81, 0);								// Turn on the display.
+	delay(50);
+
+	ht16k33_single_cmd_wr(0xe4, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xe4, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xe4, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x00, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x02, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x06, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe4, 0x08, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xe4, 0x81, 0);								// Turn on the display.
+	delay(50);
+	
+	ht16k33_single_cmd_wr(0xe6, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xe6, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xe6, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xe6, 0x00, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe6, 0x02, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe6, 0x06, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe6, 0x08, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xe6, 0x81, 0);								// Turn on the display.
+	delay(50);
+
+	ht16k33_single_cmd_wr(0xe8, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xe8, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xe8, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xe8, 0x00, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe8, 0x02, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe8, 0x06, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xe8, 0x08, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xe8, 0x81, 0);								// Turn on the display.
+	delay(50);
+	
+	ht16k33_single_cmd_wr(0xea, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xea, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xea, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xea, 0x00, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xea, 0x02, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xea, 0x06, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xea, 0x08, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xea, 0x81, 0);								// Turn on the display.
+	delay(50);
+
+	ht16k33_single_cmd_wr(0xec, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xec, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xec, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xec, 0x00, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xec, 0x02, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xec, 0x06, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xec, 0x08, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xec, 0x81, 0);								// Turn on the display.
+	delay(50);
+	
+	ht16k33_single_cmd_wr(0xee, 0x21, 0);								// osc
+	delay(20);
+	ht16k33_single_cmd_wr(0xee, 0xa0, 0);								// row_output
+	delay(20);
+	ht16k33_single_cmd_wr(0xee, 0xe7, 0);								// dim
+	delay(20);
+	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
+	//delay(20);
+	ht16k33_single_dat_wr(0xee, 0x00, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 0, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xee, 0x02, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 1, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xee, 0x06, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 2, value .
+	delay(20);
+	ht16k33_single_dat_wr(0xee, 0x08, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 3, value .
+	delay(20);
+	ht16k33_single_cmd_wr(0xee, 0x81, 0);								// Turn on the display.
+	delay(50);
+	*/
+
 	/* Use iic2 for dev. board. */
 	/* Need to use iic1 for main board. */
 	while(!done_des_addr)
@@ -310,7 +464,7 @@ void initHt16k33(unsigned char iic_chnl)
 			ht16k33_single_cmd_wr(*(des_addr + des_addr_cntr), *(cmd_codes + cmd_code_cntr), iic_chnl);	// Set init. command.
 			delay(20);
 			cmd_code_cntr += 1;																									// Move to next command.
-			if (cmd_code_cntr > 3)
+			if (cmd_code_cntr > 2)
 				done_cmd_code = 1;																								// Done sending commands.
 		}	// done_cmd_code
 		des_addr_cntr += 1;																										// Move to next display.
@@ -320,12 +474,14 @@ void initHt16k33(unsigned char iic_chnl)
 		{
 			delay(40);																												// Wait before sending another command.
 			done_cmd_code = 0;																									// Re-enter loop.
+			cmd_code_cntr = 0;			
 		}
 	}		// done_des_addr
 	delay(40);
+	
 
 	done_des_addr = 0;	
-	des_addr_cntr = 0;																											// Move to next display.
+	des_addr_cntr = 0;	
 	
 	/* Write index to all digits for each display. */
 	while(!done_des_addr)
@@ -346,7 +502,12 @@ void initHt16k33(unsigned char iic_chnl)
 		des_addr_cntr += 1;																										// Move to next display.
 		if (des_addr_cntr > 7)
 			done_des_addr = 1;																									// Done with all displays.
-		delay(20);	
+		else
+		{
+			delay(20);
+			done_digits = 0;
+			digit_addr_cntr = 0;
+		}
 	}
 }
 /* This function tests out the holtek display. */

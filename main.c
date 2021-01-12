@@ -64,7 +64,7 @@ void main(void) {
   	initDevice();										// Initialize microcontroller.
   	delay(40);											// Wait
 	
-	//initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
+	initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
 	
 	/*
 	ht16k33_single_cmd_wr(0xe0, 0x21);			// osc
@@ -87,7 +87,7 @@ void main(void) {
 	*/
 
 	// This works.
-	ht16k33_test(0xe0, 0);	// Test display 1.
+	/*ht16k33_test(0xe0, 0);	// Test display 1.
 	delay(50);
 	ht16k33_test(0xe2, 0);	// Test display 2.
 	delay(50);
@@ -103,7 +103,8 @@ void main(void) {
 	delay(50);
 	ht16k33_test(0xee, 0);	// Test display 8.
 	delay(50);
-	
+	*/
+
 	//tca9548a_fsm(0xee, 1);
 
 	// This works.
