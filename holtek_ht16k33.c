@@ -4,8 +4,7 @@
 	Adapted from Fabio Pereira.
 	HCS08 Unleashed. 2008
 
-	This function writes each temperature
-	to the 7-seg display.
+	These functions write temps. to the displays.
 */
 
 /* Function prototypes. *****************************************************************************************/
@@ -586,9 +585,9 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 														0x06,	// Digit 2 (com 3)
 														0x08	// Digit 3 (com 4), F degree label
 														};	
-	temp_raw = *(data + 3);
+	temp_raw = *(data + 4);
 	temp_raw <<= 8;
-	temp_raw |= *(data + 4);
+	temp_raw |= *(data + 5);
 	
 	/* Calculate temp. for Celsius. */
 	//	temp_c = -45 + 175*(temp_raw / 65536);
@@ -612,7 +611,7 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 			if (cntr > 2)
 			{
 				done = 1;
-				*(dspl_dig + cntr) = *(disp_dig_lut + 12);															// Unit F digit.  
+				*(dspl_dig + cntr) = *(disp_dig_lut + 12);																// Unit F digit.  
 				cntr = 0;
 			}
 			else
@@ -630,16 +629,16 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 	/* Now send the display digit. */
 	while(!done_dspl)
 	{
-		ht16k33_single_dat_wr(des_addr, *(digit_addr + addr_indx), *(dspl_dig + addr_indx), iic_chnl);// Set des_2, digit n, value m.
+		ht16k33_single_dat_wr(des_addr, *(digit_addr + addr_indx), *(dspl_dig + addr_indx), iic_chnl);	// Set des_2, digit n, value m.
 		delay(40);
 		// Decide if done.
 		if (addr_indx == 3)	
-			done_dspl = 1;																										// done with digit
+			done_dspl = 1;																											// done with digit
 		else 
-			addr_indx += 1;																									// Move to the next digit.
+			addr_indx += 1;																										// Move to the next digit.
 	}
-	/**************************/
-	ht16k33_single_cmd_wr(des_addr, 0x81, iic_chnl);																// Turn on the display.
+	/*******************************/
+	//ht16k33_single_cmd_wr(des_addr, 0x81, iic_chnl);																	// Turn on the display.
 	
-	return (done_dspl);
+	return (ht16k33_single_cmd_wr(des_addr, 0x81, iic_chnl));														// Turn on the display.
 }

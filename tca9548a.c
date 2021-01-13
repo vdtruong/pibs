@@ -15,7 +15,7 @@ unsigned char tca9548a_fsm(unsigned char des_addr, unsigned char cntrl_reg, unsi
 unsigned char tca9548a_fsm(unsigned char des_addr, unsigned char cntrl_reg, unsigned char iic_chnl)
 {
 	unsigned char cntrl_reg_label = 0x01;
-	unsigned char done_tx = 0, strt = 1, i2c_state = 1, prev_st = 0;
+	//unsigned char done_tx = 0, strt = 1, i2c_state = 1, prev_st = 0;
 	
 	/* Choose tca channel. */	
 	if (cntrl_reg == 0)

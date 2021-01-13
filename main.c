@@ -51,11 +51,11 @@
 
 void main(void) { 
   
-  	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
+  	unsigned char cntrl_reg = 1;																	/* Set the counter for the tca9548a. Something wrong with first channel. */
 	unsigned char tca_done = 0;
 	struct Shtc3Outputs sens_outputs;
 	unsigned char des_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* destination address with write bit */
-	unsigned char des_addr_cntr = 0;																/* There are eight displays. */
+	unsigned char des_addr_cntr = 1;																/* There are eight displays. Something wrong with first one. */
 	unsigned char capt_done = 0;
 	unsigned char strt = 1;
 
@@ -65,7 +65,8 @@ void main(void) {
   	delay(40);											// Wait
 	
 	initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
-	
+	delay(1000);
+
 	/*
 	ht16k33_single_cmd_wr(0xe0, 0x21);			// osc
 	delay(20);
@@ -141,6 +142,30 @@ void main(void) {
 
 	for(;;) {
   		
+		// Switch tca to channel 1.  There is something wrong with channel 0.
+		while(!tca9548a_fsm(0xee, cntrl_reg, 1));	// Wait until done.
+		delay(50);
+		cntrl_reg += 1;
+
+		while(!sens_outputs.done){				
+			sens_outputs = i2c_fsm_shtc3(strt);		// Capture temp. sensor data.
+		}
+		delay(50);
+		sens_outputs.done = 0;
+		//start = 0;
+		
+		/* Display data to 7-seg display. */
+		/* Wait until display is done. */
+		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0));
+		des_addr_cntr += 1;								// Move to next display. 
+		if(des_addr_cntr == 4)
+		{	
+			des_addr_cntr = 1;							// Reset to second display.
+   		cntrl_reg = 1;									// Reset to second channel.
+			//sens_outputs.done = 0;						// Continue with data capture.
+		}
+		delay(100);
+
 		/* Switch tca to each temp. sensor. */
 		//tca_done = tca9548a_fsm(0xee, 1, 1);
 		//delay(20);
