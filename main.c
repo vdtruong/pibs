@@ -65,7 +65,7 @@ void main(void) {
   	delay(40);											// Wait
 	
 	initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
-	delay(1000);
+	delay(5000);
 
 	/*
 	ht16k33_single_cmd_wr(0xe0, 0x21);			// osc
@@ -144,13 +144,13 @@ void main(void) {
   		
 		// Switch tca to channel 1.  There is something wrong with channel 0.
 		while(!tca9548a_fsm(0xee, cntrl_reg, 1));	// Wait until done.
-		delay(50);
+		delay(500);
 		cntrl_reg += 1;
 
 		while(!sens_outputs.done){				
 			sens_outputs = i2c_fsm_shtc3(strt);		// Capture temp. sensor data.
 		}
-		delay(50);
+		delay(500);
 		sens_outputs.done = 0;
 		//start = 0;
 		
@@ -158,13 +158,13 @@ void main(void) {
 		/* Wait until display is done. */
 		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0));
 		des_addr_cntr += 1;								// Move to next display. 
-		if(des_addr_cntr == 4)
+		if(des_addr_cntr == 8)
 		{	
 			des_addr_cntr = 1;							// Reset to second display.
    		cntrl_reg = 1;									// Reset to second channel.
 			//sens_outputs.done = 0;						// Continue with data capture.
 		}
-		delay(100);
+		delay(500);
 
 		/* Switch tca to each temp. sensor. */
 		//tca_done = tca9548a_fsm(0xee, 1, 1);
