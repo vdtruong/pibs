@@ -64,7 +64,7 @@ void main(void) {
   	initDevice();										// Initialize microcontroller.
   	delay(40);											// Wait
 	
-	initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
+	//initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
 	delay(5000);
 
 	/*
@@ -141,7 +141,7 @@ void main(void) {
 	*/
 
 	for(;;) {
-  		
+  		/* This part works for each sensors.
 		// Switch tca to channel 1.  There is something wrong with channel 0.
 		while(!tca9548a_fsm(0xee, cntrl_reg, 1));	// Wait until done.
 		delay(500);
@@ -154,17 +154,17 @@ void main(void) {
 		sens_outputs.done = 0;
 		//start = 0;
 		
-		/* Display data to 7-seg display. */
-		/* Wait until display is done. */
+		// Display data to 7-seg display.
+		// Wait until display is done.
 		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0));
 		des_addr_cntr += 1;								// Move to next display. 
 		if(des_addr_cntr == 8)
 		{	
 			des_addr_cntr = 1;							// Reset to second display.
    		cntrl_reg = 1;									// Reset to second channel.
-			//sens_outputs.done = 0;						// Continue with data capture.
 		}
 		delay(500);
+		*/
 
 		/* Switch tca to each temp. sensor. */
 		//tca_done = tca9548a_fsm(0xee, 1, 1);
@@ -193,13 +193,19 @@ void main(void) {
 		//	slv_addr_cntr = 0;					/* Reset to first display. */
    	
     	// This part works for shtc3 measurement.
-		/*while(!sens_outputs.done){				
+		while(!sens_outputs.done){				
 			sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
 		}
 		delay(1000);
-		sens_outputs.done = 1;
-		strt = 1;
-		*/
+		
+		// If done, send data to pc.
+		if(sens_outputs.done)
+		{
+			sciComm(sens_outputs.data);
+		}
+		sens_outputs.done = 0;						// Reset
+		//strt = 1;
+		
 
 		//ht16k33_test(0xe0, 0);	// Test display 1.
 		//delay(500);
