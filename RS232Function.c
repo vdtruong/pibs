@@ -3,7 +3,7 @@
 
 /* functions prototypes */
 void SendSCI(byte *array);
-void SendSCIOnePkt(unsigned char *array);
+void SendSCIOnePkt(unsigned char *array, unsigned char pkt_size);
 /* end of prototypes */
 
 
@@ -18,10 +18,10 @@ void SendSCI(byte *array)
     	SCI1D = *(array+i);   	// then send out to SCI
   	}
 }
-void SendSCIOnePkt(unsigned char *array)
+void SendSCIOnePkt(unsigned char *array, unsigned char pkt_size)
+
 {
- 	unsigned char pkt_size = 7;
-  	unsigned char i = 0;
+ 	unsigned char i = 0;
   
   	for(i=0; i < pkt_size; i++)
 	{

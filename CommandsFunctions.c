@@ -1,15 +1,15 @@
 /* 6-13-09 Commands sent from labview */
 
-/* function prototypes **************************/
+/* function prototypes **************************************/
 void caseSingle(void);
 void caseCont(byte temp);
 void caseSavEeprom(void);
 void caseReadEeprom(void);
-void sciComm(unsigned char *pkt);
-/************************************************/
+void sciComm(unsigned char *pkt, unsigned char pkt_size);
+/************************************************************/
 
 
-/* functions begin ******************************/
+/* functions begin ******************************************/
 
 void caseSingle(void){
 
@@ -56,14 +56,14 @@ void caseReadEeprom(void){
    i2cMstrStart(eepromslav,0x01); // read from eeprom
    delay(20000); // give eeprom sometime to react  
 }
-void sciComm(unsigned char *pkt)
+void sciComm(unsigned char *pkt, unsigned char pkt_size)
 {
 	unsigned char temp;
 
 	// SCI communication between Labview and micro
   	if (SCI1S1_RDRF)
 	{
-   	SCI1S1_RDRF = 0; 						// reset flag
+   	SCI1S1_RDRF = 0; 							// reset flag
     	temp = SCI1D;
       
     	switch (temp)
@@ -83,17 +83,17 @@ void sciComm(unsigned char *pkt)
         		caseReadEeprom();
         		break;
       	case 0x06:
-        		SendSCI(eepromReadData); 	// send to pc eeprom data saved
+        		SendSCI(eepromReadData); 		// send to pc data saved
         		break;
       	case 0x07:
-        		i2c1MstrStart(LCDSLAVE,0); // send start signal to lcd
+        		i2c1MstrStart(LCDSLAVE,0); 	// send start signal to lcd
         		break;
       	case 0x08:
-        		SendSCIOnePkt(pkt); 			// send to pc eeprom data saved
+        		SendSCIOnePkt(pkt, pkt_size); // send to pc data saved
         		break;
       	default:
         		break;
     	}
   	}
 }
-/* functions end */
+/* functions end ******************************************************/

@@ -51,20 +51,25 @@
 
 void main(void) { 
   
-  	unsigned char cntrl_reg = 1;																	/* Set the counter for the tca9548a. Something wrong with first channel. */
+  	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
 	unsigned char tca_done = 0;
 	struct Shtc3Outputs sens_outputs;
 	unsigned char des_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* destination address with write bit */
-	unsigned char des_addr_cntr = 1;																/* There are eight displays. Something wrong with first one. */
+	unsigned char des_addr_cntr = 0;																/* There are eight displays. */
 	unsigned char capt_done = 0;
 	unsigned char strt = 1;
+	unsigned char pkt_size = 63;
+	unsigned char dat_buffr[56];																	// Holds all 8 sensors data.
+	unsigned char num_of_dat_pkts = 8;															// 8 packets of temp. sensors.
+	unsigned char num_of_dat_vals = 7;															// 7 data values per packet.
+	unsigned char i = 0, j = 0;
 
 	sens_outputs.done = 0;
   	
   	initDevice();										// Initialize microcontroller.
   	delay(40);											// Wait
 	
-	//initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
+	initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
 	delay(5000);
 
 	/*
@@ -141,31 +146,58 @@ void main(void) {
 	*/
 
 	for(;;) {
-  		/* This part works for each sensors.
-		// Switch tca to channel 1.  There is something wrong with channel 0.
-		while(!tca9548a_fsm(0xee, cntrl_reg, 1));	// Wait until done.
+  		// This is the main part. ******************************************
+		// Switch tca to each sensor channel.  
+		while(!tca9548a_fsm(0xee, cntrl_reg, 1));								// Wait until done.
 		delay(500);
 		cntrl_reg += 1;
-
+		
+		// Capture data.
 		while(!sens_outputs.done){				
-			sens_outputs = i2c_fsm_shtc3(strt);		// Capture temp. sensor data.
+			sens_outputs = i2c_fsm_shtc3(strt);									// Capture temp. sensor data.
+		}
+		
+		// Concatenate all data into buffer.
+		//for(i = 0; i < num_of_dat_pkts; i++)
+		//{
+		for(j = 0; j < num_of_dat_vals; j++)
+		{
+			*(dat_buffr + cntrl_reg*7 + j) = *(sens_outputs.data + j); 	// Save data into buffer.
 		}
 		delay(500);
-		sens_outputs.done = 0;
+		//sens_outputs.done = 0;
 		//start = 0;
 		
-		// Display data to 7-seg display.
+		// Display data to single (cnrl_reg) 7-seg display.
 		// Wait until display is done.
 		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0));
-		des_addr_cntr += 1;								// Move to next display. 
+		des_addr_cntr += 1;															// Move to next display. 
 		if(des_addr_cntr == 8)
 		{	
-			des_addr_cntr = 1;							// Reset to second display.
-   		cntrl_reg = 1;									// Reset to second channel.
+			// Update labview when all packets are done.
+			// If done, send data to pc.  If asked.
+			if(sens_outputs.done)
+			{
+				sciComm(dat_buffr, pkt_size);
+			}
+			delay(500);
+			des_addr_cntr = 0;														// Reset to first display.
+   		cntrl_reg = 0;																// Reset to first channel.
 		}
 		delay(500);
-		*/
+		
+		//If done, send data to pc.  If asked.
+		/*if(sens_outputs.done)
+		{
+			sciComm(dat_buffr, pkt_size);
+		}
+		delay(500);*/
+			
+		sens_outputs.done = 0;														// Reset.
+		
+		/*********************************************************************/
 
+		// Below are test codes. ///////////////////////////////////////////////////
 		/* Switch tca to each temp. sensor. */
 		//tca_done = tca9548a_fsm(0xee, 1, 1);
 		//delay(20);
@@ -192,20 +224,22 @@ void main(void) {
 		//if(slv_addr_cntr == 8)
 		//	slv_addr_cntr = 0;					/* Reset to first display. */
    	
-    	// This part works for shtc3 measurement.
-		while(!sens_outputs.done){				
+    	////////////////////////////////////////////////////////////////////
+		// This part works for one shtc3 measurement.  It includes sci to labview.
+		/*while(!sens_outputs.done){				
 			sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
 		}
-		delay(1000);
+		delay(5000);
 		
-		// If done, send data to pc.
+		// If done, send data to pc.  If asked.
 		if(sens_outputs.done)
 		{
-			sciComm(sens_outputs.data);
+			sciComm(sens_outputs.data, 7);
 		}
 		sens_outputs.done = 0;						// Reset
+		*/
 		//strt = 1;
-		
+		/////////////////////////////////////////////////////////////////////
 
 		//ht16k33_test(0xe0, 0);	// Test display 1.
 		//delay(500);

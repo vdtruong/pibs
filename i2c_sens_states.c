@@ -401,7 +401,7 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 				case 16:												// I2C_SND_ACK:
 					while(!IIC2S_TCF);							// Wait until transmission is done.
 					IIC2C1_TXAK = 0;								// Send ACK.
-					if (rd_byte_cntr < 7)						// If has not read 6 bytes yet.
+					if (rd_byte_cntr < 7)						// If has not read 7 bytes yet.
 						i2c_state = 15;
 					else
 						i2c_state = 8;								// Send stop bit;
