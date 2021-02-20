@@ -38,7 +38,9 @@ void SCI_Init (void){
   	SCI1C1  = 0x00;  					// 8-bit mode. Normal operation
   	SCI1C2  = 0x0C;  					// Receiver interrupt disabled. Transmitter and receiver enabled
   	SCI1C3  = 0x00;  					// Disable all errors interrupts
-  	SCI1BDL = 0x1A;  					// This register and the SCI1BDH are used to configure the SCI baud rate
+  	//SCI1BDL = 0x1A;  				// This register and the SCI1BDH are used to configure the SCI baud rate (26).
+  	//SCI1BDL = 0x02;  					// 125K.
+  	SCI1BDL = 0x0D;  					// 19,200.
   	SCI1BDH = 0x00;  					//                    BUSCLK                4MHz
                    					// Baud rate = -------------------- = ------------ = 9600bps
                    					//              [SBR12:SBR0] x 16         26 x 16

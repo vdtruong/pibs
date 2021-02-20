@@ -539,7 +539,7 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 	unsigned char digit_data = 0;						// Data for each digit of the 7-seg display.
 	unsigned char i2c_state = 1;						// Next state machine index.
 	unsigned char prev_st = 0;							// Previous state of state machine.
-	unsigned char b = 1;
+	unsigned char b = 0;									// Start with digit 0.
 	unsigned char done = 0;
 	float a = 0.0, c = 0.0, d = 0.0,  diff = 0.0;
 	unsigned char cntr = 0;
@@ -548,6 +548,7 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 	unsigned int temp_raw = 0;
 	float temp_f = 0.0;									// temperature in farenheit.
 	float temp_c = 0.0;									// temperature in celsius. 
+	unsigned char high_temp = 0;						// Flag for temp_f equal or greater than 100 F.
 	unsigned char disp_dig_lut[13] = 		{		// display look up table
 			  											0x3f,	// 0
 														0x06,	// 1
@@ -593,36 +594,74 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 	//	temp_c = -45 + 175*(temp_raw / 65536);
 	/* Calculate temp. for Farenheit. */
 	temp_f = (-81.0 + 315.0*((float)temp_raw / 65536.0)) + 32.0;
+	//temp_f = (-81.0 + 315.0*((float)(temp_raw>>16))) + 32.0;
+
 
 	/* Extract each temperature value as an integer. 
-	 * Use this integer as an index to the displ_dig array. */
+	 * Use this integer as an index to the displ_dig array. 
+	 	b is the integer. */
+	if (temp_f < 100)
+		a = temp_f/10.0;
+	else
+	{
+		a = temp_f/100.0;
+		high_temp = 1;
+	}
 	
-	a = temp_f/10.0;
 	while (!done)
 	{
 		diff = a - b;
 		if (diff < 1.0)
 		{
-			if (cntr == 1)
-				*(dspl_dig + cntr) = *(disp_dig_lut_dp + b);  
-			else
-				*(dspl_dig + cntr) = *(disp_dig_lut + b);  	
+			if (!high_temp)																										// If under 100 F.
+			{
+				if (cntr == 1)
+					*(dspl_dig + cntr) = *(disp_dig_lut_dp + b);  
+				else
+					*(dspl_dig + cntr) = *(disp_dig_lut + b);  	
+			}
+			else																														// 100 F or higher.
+			{
+				if (cntr == 2)
+					*(dspl_dig + cntr) = *(disp_dig_lut_dp + b);  
+				else
+					*(dspl_dig + cntr) = *(disp_dig_lut + b);  	
+			}
 			cntr += 1;
-			if (cntr > 2)
+			if (!high_temp)
 			{
-				done = 1;
-				*(dspl_dig + cntr) = *(disp_dig_lut + 12);																// Unit F digit.  
-				cntr = 0;
+				if (cntr > 2)
+				{
+					done = 1;
+					*(dspl_dig + cntr) = *(disp_dig_lut + 12);															// Unit F digit.  
+					cntr = 0;
+					b = 0;
+				}
+				else
+				{
+					c = a - b;
+					d = c*10.0;
+					a = d;
+					b = 0;
+				}
 			}
-			else
+			else																														// 100 F or higher.
 			{
-				c = a - b;
-				d = c*10.0;
-				a = d;
-				b = 1;
-			}
+				if (cntr > 3)
+				{
+					b = 0;
+					done = 1;
+				}
+				else
+				{
+					c = a - b;
+					d = c*10.0;
+					a = d;
+					b = 0;
+				}
+			}	
 		}
-		else
+		else																															// if diff > 1
 			b += 1;
 	}
 	
