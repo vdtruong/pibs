@@ -26,7 +26,7 @@
    6-13-09    	Try to compact main into smaller functions. 
               	This works. 
 	12-23-20		First version of pibs.
-
+	3-13-20		Got sci isr to work.
 */
 
 
@@ -35,6 +35,7 @@
 #include "display.h"
 #include "eepromglobals.h"
 #include "arrayglobals.h"
+
 #include "InitFunctions.c"
 #include "LcdFunctions.c"
 #include "RS232Function.c"
@@ -65,14 +66,15 @@ void main(void) {
 	unsigned char i = 0, j = 0;
 
 	sens_outputs.done = 0;
-  	
+
+	EnableInterrupts;									// Enable sci interrupt.
   	initDevice();										// Initialize microcontroller.
   	delay(40);											// Wait
 	
 	initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
 	delay(5000);
 
-	/*
+	/*	Test code.
 	ht16k33_single_cmd_wr(0xe0, 0x21);			// osc
 	delay(20);
 	ht16k33_single_cmd_wr(0xe0, 0xa0);			// row_output
@@ -150,13 +152,32 @@ void main(void) {
 		// Switch tca to each sensor channel.  
 		while(!tca9548a_fsm(0xee, cntrl_reg, 1));								// Wait until done.
 		delay(500);
-		cntrl_reg += 1;
+		//cntrl_reg += 1;
 		
 		// Capture data.
-		while(!sens_outputs.done){				
-			sens_outputs = i2c_fsm_shtc3(strt);									// Capture temp. sensor data.
+		while(!sens_outputs.done)
+		{				
+			//sens_outputs = i2c_fsm_shtc3(strt);								// Capture temp. sensor data.
+			// We actually skip the first byte because it is the header, 0x08 or 0x09.
+			switch (*(sens_type_arry + cntrl_reg + 1))						// cntrl_reg tells which sensor, 0, 1, ... 7
+			{
+				case 0x00:																// sens_type = 0
+					sens_outputs = i2c_fsm_shtc3(strt);							// Capture shtc3 temp. sensor data.
+					break;
+				case 0x01:																// sens_type = 1
+					sens_outputs = i2c_fsm_sht3x(strt);							// Capture sht3x temp. sensor data.
+					break;
+				case 0x02:																// sens_type = 2
+					sens_outputs = i2c_fsm_d6t_1a_01(strt);					// Capture d6t_1a_01 temp. sensor data.
+					break;
+				default:
+					sens_outputs = i2c_fsm_shtc3(strt);							// Capture shtc3 temp. sensor data.
+					break;
+			}
 		}
+		cntrl_reg += 1;
 		
+
 		// Concatenate all data into buffer.
 		//for(i = 0; i < num_of_dat_pkts; i++)
 		//{
@@ -172,14 +193,19 @@ void main(void) {
 		// Wait until display is done.
 		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0));
 		des_addr_cntr += 1;															// Move to next display. 
+		
+		// If all sensors are done.
 		if(des_addr_cntr == 8)
 		{	
-			// Update labview when all packets are done.
-			// If done, send data to pc.  If asked.
-			if(sens_outputs.done)
+			// Check for new data flag.
+			if (new_dat_flg)
 			{
-				sciComm(dat_buffr, pkt_size);
-			}
+				new_dat_flg = 0;														// Reset.
+				if (*(sens_type_arry + 0) == 0x08)								// If header is 0x08.
+					SendSCIOnePkt(dat_buffr, pkt_size); 						// send to pc data saved
+        		else																		// If header is 0x09.
+					SendSCIOnePkt(sens_type_arry, 9); 							// send sens_type_array to pc.
+        	}
 			delay(500);
 			des_addr_cntr = 0;														// Reset to first display.
    		cntrl_reg = 0;																// Reset to first channel.

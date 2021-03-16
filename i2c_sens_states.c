@@ -188,7 +188,6 @@ unsigned char *i2c_fsm(unsigned char strt)
 	}
 	return (i2c_buffer);
 }
-/***** Function begins ******************************************************************************/
 /* This is for the Sensirion shtc3 sensor. */
 struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 {
@@ -436,7 +435,6 @@ struct Shtc3Outputs i2c_fsm_shtc3(unsigned char strt)
 	}			/* strt */
 	return (ste_out);
 }
-/***** Function begins ******************************************************************************/
 /* This is for the Sensirion sht3x sensor. */
 struct Shtc3Outputs i2c_fsm_sht3x(unsigned char strt)
 {
@@ -682,7 +680,6 @@ struct Shtc3Outputs i2c_fsm_sht3x(unsigned char strt)
 	}			/* strt */
 	return (ste_out);
 }
-/***** Function begins ******************************************************************************/
 /* This is for the Omron D6T_1A_01/02 sensor. */
 struct Shtc3Outputs i2c_fsm_d6t_1a_01(unsigned char strt)
 {
