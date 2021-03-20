@@ -1,34 +1,8 @@
-/* Version 38 See MC9S08QE128RM for data sheet.
-   01-03-2009 
-   02-02-2009 	got LCD labels to work
-   02-07-2009 	got lcd max to work, but has to leave bus on 
-              	all the time. 
-   02-10-2009 	try to implement iic eeprom, able to transmit 16 bytes
-   02-19-2009 	able to write and read 256 bytes with eeprom
-   02-28-2009 	can update lcd, save to eeprom and read from eeprom,
-              	after saving or reading from eeprom, resume lcd update.
-   05-14-2009 	got the LCD and 7-seg. to work with the new box.
-              	do some clean up of codes, more subroutines.
-   05-15-2009 	try to implement 8-bit DAC
-              	doesn't seem to work correctly, the amplitude
-              	may be correct but the frequecy is not correct
-   06-06-09   	try to implement function prototyping
-   6-8-09     	Reimplement the eeprom read routine
-   6-12-09    	Try to implement function returning pointer to 
-              	array of adc samples. This works, but each function
-              	using this function will have a different waveform. 
-              	Before, all functions use only one waveform from memory.
-              	Maybe we can have a variable that contains the return pointer,
-              	and use that variable everywhere else that need that
-              	waveform. 
-   6-12-09    	Use a pointer to a returned pointer for the new waveform.
-              	This works, so all functions use the same waveform.
-   6-13-09    	Try to compact main into smaller functions. 
-              	This works. 
-	12-23-20		First version of pibs.
+/* See MC9S08QE128RM for data sheet.
+   2-23-20		First version of pibs.
 	3-13-20		Got sci isr to work.
+	3-20-20		Got sensor sht3x to work.  Able to change sensor from labview.
 */
-
 
 #include <hidef.h>      /* for EnableInterrupts macro */
 #include "derivative.h" /* include peripheral declarations */
@@ -49,7 +23,6 @@
 #include "holtek_ht16k33.c"
 #include "tca9548a.c"
 
-
 void main(void) { 
   
   	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
@@ -59,10 +32,10 @@ void main(void) {
 	unsigned char des_addr_cntr = 0;																/* There are eight displays. */
 	unsigned char capt_done = 0;
 	unsigned char strt = 1;
-	unsigned char pkt_size = 63;
+	unsigned char pkt_size = 56;																	// 8 rows x 7 cols. of data, hdr for first col.
 	unsigned char dat_buffr[56];																	// Holds all 8 sensors data.
 	unsigned char num_of_dat_pkts = 8;															// 8 packets of temp. sensors.
-	unsigned char num_of_dat_vals = 7;															// 7 data values per packet.
+	unsigned char num_of_dat_vals = 7;															// 7 data values per packet, header in front.
 	unsigned char i = 0, j = 0;
 
 	sens_outputs.done = 0;
@@ -149,15 +122,14 @@ void main(void) {
 
 	for(;;) {
   		// This is the main part. ******************************************
+		// The whole routine is for one sensor at a time.
 		// Switch tca to each sensor channel.  
 		while(!tca9548a_fsm(0xee, cntrl_reg, 1));								// Wait until done.
 		delay(500);
-		//cntrl_reg += 1;
 		
 		// Capture data.
 		while(!sens_outputs.done)
 		{				
-			//sens_outputs = i2c_fsm_shtc3(strt);								// Capture temp. sensor data.
 			// We actually skip the first byte because it is the header, 0x08 or 0x09.
 			switch (*(sens_type_arry + cntrl_reg + 1))						// cntrl_reg tells which sensor, 0, 1, ... 7
 			{
@@ -175,25 +147,20 @@ void main(void) {
 					break;
 			}
 		}
-		cntrl_reg += 1;
 		
-
 		// Concatenate all data into buffer.
-		//for(i = 0; i < num_of_dat_pkts; i++)
-		//{
 		for(j = 0; j < num_of_dat_vals; j++)
 		{
 			*(dat_buffr + cntrl_reg*7 + j) = *(sens_outputs.data + j); 	// Save data into buffer.
 		}
 		delay(500);
-		//sens_outputs.done = 0;
-		//start = 0;
 		
-		// Display data to single (cnrl_reg) 7-seg display.
+		// Display data to a single (cnrl_reg) 7-seg display.
 		// Wait until display is done.
-		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0));
+		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0, *(sens_type_arry + cntrl_reg + 1)));
 		des_addr_cntr += 1;															// Move to next display. 
-		
+		cntrl_reg += 1;																// Move to the next tca (sensor) channel.
+
 		// If all sensors are done.
 		if(des_addr_cntr == 8)
 		{	
@@ -212,13 +179,6 @@ void main(void) {
 		}
 		delay(500);
 		
-		//If done, send data to pc.  If asked.
-		/*if(sens_outputs.done)
-		{
-			sciComm(dat_buffr, pkt_size);
-		}
-		delay(500);*/
-			
 		sens_outputs.done = 0;														// Reset.
 		
 		/*********************************************************************/

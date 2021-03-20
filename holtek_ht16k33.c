@@ -15,8 +15,8 @@ void ht16k33_single_dat_wr(unsigned char des_addr, unsigned char cmd, unsigned c
 /* This function initializes all 7-seg displays. */
 void initHt16k33(unsigned char iic_chnl);
 /* This function sends all four digits to the display. */
-// Inputs: address of 7-seg display, pointer to temp. data array
-unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned char iic_chnl);
+// Inputs: address of 7-seg display, pointer to temp. data array, iic channel and sens_type.
+unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned char iic_chnl, unsigned char sens_type);
 /* This function tests out a display. */
 void ht16k33_test (unsigned char des_addr, unsigned char iic_chnl);
 /*****************************************************************************************************************/
@@ -300,160 +300,6 @@ void initHt16k33(unsigned char iic_chnl)
 													0x71 	// f
 												};	
 	
-	/*
-	ht16k33_single_cmd_wr(0xe0, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xe0, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xe0, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xe0, 0x00, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe0, 0x02, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe0, 0x06, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe0, 0x08, *(disp_dig_lut + 0), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xe0, 0x81, 0);								// Turn on the display.
-	delay(50);
-	
-	ht16k33_single_cmd_wr(0xe2, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xe2, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xe2, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xe2, 0x00, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe2, 0x02, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe2, 0x06, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe2, 0x08, *(disp_dig_lut + 1), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xe2, 0x81, 0);								// Turn on the display.
-	delay(50);
-
-	ht16k33_single_cmd_wr(0xe4, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xe4, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xe4, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x00, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x02, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x06, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe4, 0x08, *(disp_dig_lut + 2), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xe4, 0x81, 0);								// Turn on the display.
-	delay(50);
-	
-	ht16k33_single_cmd_wr(0xe6, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xe6, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xe6, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xe6, 0x00, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe6, 0x02, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe6, 0x06, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe6, 0x08, *(disp_dig_lut + 3), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xe6, 0x81, 0);								// Turn on the display.
-	delay(50);
-
-	ht16k33_single_cmd_wr(0xe8, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xe8, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xe8, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xe8, 0x00, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe8, 0x02, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe8, 0x06, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xe8, 0x08, *(disp_dig_lut + 4), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xe8, 0x81, 0);								// Turn on the display.
-	delay(50);
-	
-	ht16k33_single_cmd_wr(0xea, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xea, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xea, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xea, 0x00, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xea, 0x02, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xea, 0x06, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xea, 0x08, *(disp_dig_lut + 5), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xea, 0x81, 0);								// Turn on the display.
-	delay(50);
-
-	ht16k33_single_cmd_wr(0xec, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xec, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xec, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xec, 0x00, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xec, 0x02, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xec, 0x06, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xec, 0x08, *(disp_dig_lut + 6), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xec, 0x81, 0);								// Turn on the display.
-	delay(50);
-	
-	ht16k33_single_cmd_wr(0xee, 0x21, 0);								// osc
-	delay(20);
-	ht16k33_single_cmd_wr(0xee, 0xa0, 0);								// row_output
-	delay(20);
-	ht16k33_single_cmd_wr(0xee, 0xe7, 0);								// dim
-	delay(20);
-	//ht16k33_single_cmd_wr(0xe0, 0x80);			// blink
-	//delay(20);
-	ht16k33_single_dat_wr(0xee, 0x00, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 0, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xee, 0x02, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 1, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xee, 0x06, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 2, value .
-	delay(20);
-	ht16k33_single_dat_wr(0xee, 0x08, *(disp_dig_lut + 7), 0);	// Set slav_x, digit 3, value .
-	delay(20);
-	ht16k33_single_cmd_wr(0xee, 0x81, 0);								// Turn on the display.
-	delay(50);
-	*/
-
 	/* Use iic2 for dev. board. */
 	/* Need to use iic1 for main board. */
 	while(!done_des_addr)
@@ -476,8 +322,7 @@ void initHt16k33(unsigned char iic_chnl)
 			cmd_code_cntr = 0;			
 		}
 	}		// done_des_addr
-	delay(40);
-	
+	delay(40);	
 
 	done_des_addr = 0;	
 	des_addr_cntr = 0;	
@@ -532,7 +377,7 @@ void ht16k33_test(unsigned char des_addr, unsigned char iic_chnl)
 }	
 /* This is for the holtek ht16k33 7-seg display. */
 /* It will display the four digits of each display. */
-unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned char iic_chnl)
+unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned char iic_chnl, unsigned char sens_type)
 {
 	unsigned char done_dspl = 0;						// Indicates done with display.
 	unsigned char addr_indx = 0;						// Address of the com channel.
@@ -586,19 +431,45 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 														0x06,	// Digit 2 (com 3)
 														0x08	// Digit 3 (com 4), F degree label
 														};	
-	temp_raw = *(data + 4);
-	temp_raw <<= 8;
-	temp_raw |= *(data + 5);
+	
+	// Find temperature base on which sensor type.
+	switch (sens_type)									// Which sensor type.
+	{
+		case 0x00:											// sens_type = 0 (shtc3)
+			temp_raw = *(data + 4);						// temp msb
+			temp_raw <<= 8;								// shift to front of number
+			temp_raw |= *(data + 5);					// temp lsb
+			// Calculate temp. for Farenheit. 
+			temp_f = (-81.0 + 315.0*((float)temp_raw / 65536.0)) + 32.0;
+			break;
+		case 0x01:											// sens_type = 1 (sht3x)
+			temp_raw = *(data + 1);						// temp msb
+			temp_raw <<= 8;								// shift to front of number
+			temp_raw |= *(data + 2);					// temp lsb
+			// Calculate temp. for Farenheit. 
+			temp_f = (-49.0 + 315.0*((float)temp_raw / (65536.0 - 1)));
+			break;
+		case 0x02:																// sens_type = 2
+			temp_raw = *(data + 4);						// temp msb
+			temp_raw <<= 8;								// shift to front of number
+			temp_raw |= *(data + 5);					// temp lsb
+			// Calculate temp. for Farenheit. 
+			temp_f = (-81.0 + 315.0*((float)temp_raw / 65536.0)) + 32.0;
+			break;
+		default:
+			temp_raw = *(data + 4);						// temp msb
+			temp_raw <<= 8;								// shift to front of number
+			temp_raw |= *(data + 5);					// temp lsb
+			// Calculate temp. for Farenheit. 
+			temp_f = (-81.0 + 315.0*((float)temp_raw / 65536.0)) + 32.0;
+			break;
+	}
 	
 	/* Calculate temp. for Celsius. */
 	//	temp_c = -45 + 175*(temp_raw / 65536);
-	/* Calculate temp. for Farenheit. */
-	temp_f = (-81.0 + 315.0*((float)temp_raw / 65536.0)) + 32.0;
-	//temp_f = (-81.0 + 315.0*((float)(temp_raw>>16))) + 32.0;
-
-
+	
 	/* Extract each temperature value as an integer. 
-	 * Use this integer as an index to the displ_dig array. 
+	  	Use this integer as an index to the displ_dig array. 
 	 	b is the integer. */
 	if (temp_f < 100)
 		a = temp_f/10.0;
@@ -677,7 +548,6 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 			addr_indx += 1;																										// Move to the next digit.
 	}
 	/*******************************/
-	//ht16k33_single_cmd_wr(des_addr, 0x81, iic_chnl);																	// Turn on the display.
 	
 	return (ht16k33_single_cmd_wr(des_addr, 0x81, iic_chnl));														// Turn on the display.
 }
