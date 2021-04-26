@@ -25,20 +25,25 @@
 
 void main(void) { 
   
-  	unsigned char cntrl_reg = 0;																	/* Set the counter for the tca9548a. */
+  	unsigned char cntrl_reg = 0;																	// Set the counter for the tca9548a. 
 	unsigned char tca_done = 0;
 	struct Shtc3Outputs sens_outputs;
-	unsigned char des_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	/* destination address with write bit */
-	unsigned char des_addr_cntr = 0;																/* There are eight displays. */
+	unsigned char des_addr[8] = {0xe0, 0xe2, 0xe4, 0xe6, 0xe8, 0xea, 0xec, 0xee};	// destination address with write bit 
+	unsigned char des_addr_cntr = 0;																// There are eight displays. 
 	unsigned char capt_done = 0;
 	unsigned char strt = 1;
 	unsigned char pkt_size = 56;																	// 8 rows x 7 cols. of data, hdr for first col.
 	unsigned char dat_buffr[56];																	// Holds all 8 sensors data.
 	unsigned char num_of_dat_pkts = 8;															// 8 packets of temp. sensors.
-	unsigned char num_of_dat_vals = 7;															// 7 data values per packet, header in front.
+	unsigned char num_of_dat_vals = 7;															// 7 data values per packet, dummy in front.
 	unsigned char i = 0, j = 0;
-
-	sens_outputs.done = 0;
+	unsigned char hts221_strt_addr_arry[4] = {0xA8, 0xAF, 0xB6, 0xBD};				// Starting addresses for data and params. 
+	//unsigned char hts221_strt_addr_arry[4] = {0xa8, 0xaf, 0xb6, 0xbd};				// Starting addresses for data and params. 
+	unsigned char hts221_strt_addr_cntr = 0;													// Counter for array.
+	unsigned char hts221_strt_addr = 0xA8;														// Address to capture the hts211 sensor data.
+	unsigned char hts221_1st_addr_flg = 0;														// Set this flag when all params. are taken.
+	
+	sens_outputs.done = 0;							// Reset.
 
 	EnableInterrupts;									// Enable sci interrupt.
   	initDevice();										// Initialize microcontroller.
@@ -119,15 +124,57 @@ void main(void) {
 	sens_outputs = i2c_fsm_shtc3(strt);	// Capture temp. sensor data.
 	delay(50);
 	*/
-
+	//sens_outputs = i2c_fsm_hts221(strt, hts221_strt_addr);						// Capture st hts221 temp. sensor data.
+	//delay(200);
+	//sens_outputs = i2c_fsm_hts221(strt, hts221_strt_addr);						// Capture st hts221 temp. sensor data.
+	//delay(200);
+	//sens_outputs = i2c_fsm_hts221(strt, hts221_strt_addr);						// Capture st hts221 temp. sensor data.
+		
 	for(;;) {
   		// This is the main part. ******************************************
 		// The whole routine is for one sensor at a time.
 		// Switch tca to each sensor channel.  
-		while(!tca9548a_fsm(0xee, cntrl_reg, 1));								// Wait until done.
-		delay(500);
+		//while(!tca9548a_fsm(0xee, cntrl_reg, 1));								// Wait until done.
+		//delay(500);
 		
+		//sens_outputs = i2c_fsm_hts221(strt);						// Capture st hts221 temp. sensor data.
+		//sens_outputs = i2c_fsm_shtc3(strt);							// Capture shtc3 temp. sensor data.
+		//delay(10000);
+			
+				 
+		while(!sens_outputs.done)
+		{				
+			//sens_outputs = i2c_fsm_shtc3(strt);							// Capture shtc3 temp. sensor data.
+			sens_outputs = i2c_fsm_hts221(strt, hts221_strt_addr);						// Capture st hts221 temp. sensor data.
+			delay(5000);	// Freezes.  Reset does not restart.
+			//sens_outputs = i2c_fsm_hts221(strt, 0xB2);
+			//delay(5000);
+			// Capture st hts221 temp. sensor data.
+			//delay(400);	// One complete run.  Freezes at second run.
+			//delay(200);
+			// Set starting address for hts221.
+			/*if (hts221_1st_addr_flg)
+				hts221_strt_addr = 0xa8;						// Only use first address if flag is set.
+			else
+			{
+				hts221_strt_addr_cntr += 1;					// Move to next address.
+				if (hts221_strt_addr_cntr == 4)
+				{
+					hts221_1st_addr_flg = 1;					// Set to one if we have taken all the parameters.
+					hts221_strt_addr = 0xa8;					// Only use first address if flag is set.
+				}
+				else													// Go through addreses to find the parameters.
+					hts221_strt_addr = *(hts221_strt_addr_arry + hts221_strt_addr_cntr);
+			}*/
+		//sens_outputs = i2c_fsm_hts221(strt);						// Capture st hts221 temp. sensor data.
+		}
+		
+		//sens_outputs = i2c_fsm_hts221(strt);						// Capture st hts221 temp. sensor data.
+		//delay(9000);
+		sens_outputs.done = 0;											// Reset.
+			
 		// Capture data.
+		/*
 		while(!sens_outputs.done)
 		{				
 			// We actually skip the first byte because it is the header, 0x08 or 0x09.
@@ -142,6 +189,9 @@ void main(void) {
 				case 0x02:																// sens_type = 2
 					sens_outputs = i2c_fsm_d6t_1a_01(strt);					// Capture d6t_1a_01 temp. sensor data.
 					break;
+				case 0x03:																// sens_type = 3
+					sens_outputs = i2c_fsm_hts221(strt);						// Capture st hts221 temp. sensor data.
+					break;
 				default:
 					sens_outputs = i2c_fsm_shtc3(strt);							// Capture shtc3 temp. sensor data.
 					break;
@@ -151,7 +201,10 @@ void main(void) {
 		// Concatenate all data into buffer.
 		for(j = 0; j < num_of_dat_vals; j++)
 		{
-			*(dat_buffr + cntrl_reg*7 + j) = *(sens_outputs.data + j); 	// Save data into buffer.
+			if (cntrl_reg == 0)
+				*(dat_buffr + cntrl_reg*7 + j) = 0; 								// Save data into buffer.
+			else
+				*(dat_buffr + cntrl_reg*7 + j) = *(sens_outputs.data + j); 	// Save data into buffer.
 		}
 		delay(500);
 		
@@ -180,8 +233,9 @@ void main(void) {
 		delay(500);
 		
 		sens_outputs.done = 0;														// Reset.
+		*/
 		
-		/*********************************************************************/
+		/////////////////////////////////////////////////////////////////////////////
 
 		// Below are test codes. ///////////////////////////////////////////////////
 		/* Switch tca to each temp. sensor. */
