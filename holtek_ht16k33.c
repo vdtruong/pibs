@@ -431,6 +431,11 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 														0x06,	// Digit 2 (com 3)
 														0x08	// Digit 3 (com 4), F degree label
 														};	
+	unsigned int A = 0;									// T0_degC for st hts221
+	unsigned int B = 0;									// T0_OUT for st hts221
+	unsigned int C = 0;									// T_OUT for st hts221
+	unsigned int D = 0;									// T1_degC for st hts221
+	unsigned int E = 0;									// T1_OUT for st hts221
 	
 	// Find temperature base on which sensor type.
 	switch (sens_type)									// Which sensor type.
@@ -455,6 +460,23 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 			temp_raw |= *(data + 5);					// temp lsb
 			// Calculate temp. for Farenheit. 
 			temp_f = (-81.0 + 315.0*((float)temp_raw / 65536.0)) + 32.0;
+			break;
+		case 0x03:											// sens_type = 3 (st hts221, 24 bytes of data and calib. params. are captured)
+			A = *(data + 10)>>3;							// divide by 8
+			D = *(data + 11)>>3;							// divide by 8
+			B = *(data + 21);								// msb
+			B <<= 8;											// shift to front of number
+			B |= *(data + 20);							// lsb
+			E = *(data + 23);								// msb
+			E <<= 8;											// shift to front of number
+			E |= *(data + 22);							// lsb
+			C = *(data + 3);								// temp msb
+			C <<= 8;											// shift to front of number
+			C |= *(data + 2);								// temp lsb
+			// Calculate temp. for Celsius. 
+			//temp_c = (((float)(D - A)*((float)(C - B)))/(float)(E-B)) + A;
+			temp_c = (float)((D - A)*(C - B)/(E-B)) + A;
+			temp_f = 32*temp_c*9/5 + 32;
 			break;
 		default:
 			temp_raw = *(data + 4);						// temp msb
