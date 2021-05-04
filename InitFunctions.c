@@ -22,7 +22,7 @@ void MCU_Init(void) {
                     	// enabled. RESET pin enabled
 	// Make sure to enable this for pibs board.
 	// Do not need it for demo board.
-  	//SOPT2_IIC1PS = 1; // move icc1 to port B; see 12.1.1 page 217 and page 102.
+  	SOPT2_IIC1PS = 1; // move icc1 to port B; see 12.1.1 page 217 and page 102.
   	SCGC1 = 0x1D;     // Bus Clock to ADC, SCI1, iic1 and iic2 modules are enabled
   	// Don't forget to enable sci later.
 	//SCGC1 = 0x0C;     // Bus Clock to iic1 and iic2 modules are enabled
@@ -84,7 +84,7 @@ void GPIO_Init(void) {
   	PTHPE = 0xC0; 						// enable pull ups on PTH7 and PTH6 pins for IIC2, port H, expander and sensors
   	// For demo board, do not use ptb for iic. 
 	// For pibs board, turn on for iic1.  Make sure this is enabled.
-	//PTBPE = 0xC0; 						// enable pull ups on PTB7 and PTB6 pins for iic1, port B, 7-seg displays
+	PTBPE = 0xC0; 						// enable pull ups on PTB7 and PTB6 pins for iic1, port B, 7-seg displays
 }
 void initDevice(void){
   	MCU_Init();       				// initializes the MCU
