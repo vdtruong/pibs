@@ -18,6 +18,7 @@ struct Shtc3Outputs i2c_fsm_d6t_1a_01(unsigned char strt);								// Function re
 //struct Shtc3Outputs i2c_fsm_hts221(unsigned char strt);
 struct Shtc3Outputs i2c_fsm_hts221(unsigned char strt, unsigned char strt_addr);
 struct Shtc3Outputs i2c_fsm_aht20(unsigned char strt);									// Function returns the structure. 
+struct Shtc3Outputs i2c_fsm_adt7410(unsigned char strt);									// Function returns the structure. 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /***** Function begins *****************************************************************************************/
@@ -1280,13 +1281,13 @@ struct Shtc3Outputs i2c_fsm_aht20(unsigned char strt)
 	unsigned char cmd_byte = 0;				// Read command byte.
 	unsigned char i2c_buffer[10]= 	{
 												0x70,	// Send addr. write. 	0	
-												0xBE,	// Wakeup command msb	1
-												0x08,	// Wakeup command lsb	2
-												0x00,	// Meas. command msb		3 		0
-												0xAC,	// Meas. command lsb		4		1
-												0x33,	// Send addr. read		5		2
-												0x00, // Sleep command msb		6		3
-												0x71,	// Sleep command lsb		7		4
+												0xBE,	// Send init. command	1
+												0x08,	// Send init. 1st byte	2
+												0x00,	// Send init. 2nd byte	3 		0
+												0xAC,	// Meas. command 			4		1
+												0x33,	// meas. cmnd 1st byte	5		2
+												0x00, // meas. cmnd 2nd byte	6		3
+												0x71,	// Send addr. read		7		4
 												0x00,	// read r.h. data.		8		5
 												0x00 	// read r.h. crc			9		6
 												};		
@@ -1294,7 +1295,6 @@ struct Shtc3Outputs i2c_fsm_aht20(unsigned char strt)
 	unsigned char done = 0;
 
 	ste_out.done = 0;
-
 	
 	if (strt) {
 		while(!done)
@@ -1444,6 +1444,195 @@ struct Shtc3Outputs i2c_fsm_aht20(unsigned char strt)
 					IIC2D = *(i2c_buffer + 6);					// 
 					prev_st = 21;
 					i2c_state = 5; 								// I2C_ACK_QRY;			// next state
+					break;
+			} 	// switch 
+		}		// while 
+	}			// strt 
+	return (ste_out);
+}
+// This is for the Analog Device ADT7410 sensor. 
+// This sensor does not read beyond 2 bytes.
+// This includes the 0x91 address read and the 
+// MSB of the temperature value.  We cannot read
+// the LSB temperature.
+// This routine reads data starting at 0x00 and 0x01.
+// However, both reads gave the same results.  
+// The intention is to read the temp. MSB with 0x00 address
+// and LSB temp. with 0x01 address.  However, both times
+// give the same results.
+struct Shtc3Outputs i2c_fsm_adt7410(unsigned char strt)
+{
+	unsigned short int i2c_state = 1;		// Go to state 1.
+	unsigned short int prev_st = 0;			// Previous state.
+	unsigned char rd_byte_cntr =0;			// Byte read counter.
+	unsigned char i2c_buffer[10]= 	{
+												0x90,	// Send addr. write. 	0	
+												0x00,	//	Read address at 0x00	1
+												0x01,	// Read address at 0x01	2
+												0x02,	// 							3 		0
+												0x03,	// 							4		1
+												0x91,	// Send addr. read		5		2
+												0xB0, // 							6		3
+												0x98,	// 							7		4
+												0x00,	// 							8		5
+												0x00 	// 							9		6
+												};		
+	struct Shtc3Outputs ste_out;				// state machine outputs
+	unsigned char done = 0;
+	unsigned char tot_rd_bytes = 0;			// Total number of read bytes needed.
+	unsigned char first_read = 1;				// First temperature read starting at address 0x00.
+	unsigned char arry_1[3] = {0x00, 
+										0x00,
+										0x00};		// Array for address 0x00.
+	unsigned char arry_2[3] = {0x00, 
+										0x00,
+										0x00};		// Array for address 0x01.
+	//unsigned char dummy_rd = 0x00;			// Used to pull out 0x91 address rd.
+
+	tot_rd_bytes = 2;
+	ste_out.done = 0;
+
+	if (strt) {
+		while(!done)
+		{
+			switch(i2c_state)
+			{
+				// I2C in idle state.
+				case 0:												// i2c_idl
+					prev_st = 0;									// Set previous state.
+					break;
+				// Send a start condition.
+				case 1:												// i2c_start
+					IIC2C1_TX = 1;									// Set for transmit.
+					IIC2C1_MST = 1;								// Set for master transmit.
+					if (prev_st == 0) 
+						i2c_state = 2; 							// send dev. addr with wr bit.
+					else if (prev_st == 14) 
+						i2c_state = 12; 							// send dev. addr with wr bit.
+					break;
+				// Send a device address and write bit before wake command.
+				case 2:												// 
+					while(!IIC2S_TCF);								// Wait until transmission is done.  Wait for any transfer to complete.
+					IIC2D = *(i2c_buffer + 0);					// Send the addr. field with WR bit set (R/W = WR).
+					i2c_state = 5; 								// I2C_ACK_QRY;			// next state
+					break;
+				case 5: 												// I2C_ACK_QRY;
+					if (prev_st == 0)								// If previous command is write before wakeup msb command.
+						i2c_state = 6;								// Send read reg. address.
+					else if (prev_st == 6)
+						i2c_state = 14;								// Go to repeat start.
+					else if (prev_st == 12)
+						i2c_state = 13;							// wait for read to start 
+					break;
+				// Send read reg. addr.
+				case 6:												// 
+					while(!IIC2S_TCF);							// Wait until transmission is done.
+					if (first_read)
+						IIC2D = *(i2c_buffer + 1);				// First read address.			
+					else
+						//IIC2D = *(i2c_buffer + 3);				// Second read address.
+						IIC2D = *(i2c_buffer + 2);				// Second read address.
+					prev_st = 6;
+					i2c_state = 5; 								// I2C_ACK_QRY;			// next state
+					break;
+				// Send a stop and go to slave mode.
+				case 8:												// 
+					IIC2C1_MST = 0;								// Send a stop (go to slave mode)
+					delay(50);										// 
+					if (prev_st == 14)
+						i2c_state = 1;								// Send start bit with tx mode.
+					else if (prev_st == 17)
+					{
+						if (first_read)
+							{
+								first_read = 0;					// Reset.						
+								rd_byte_cntr =0;					// Reset.
+								prev_st = 0;
+								i2c_state = 1;							
+							}
+							else
+							{
+								//*(ste_out.data + 0) = dummy_rd;
+								*(ste_out.data + 0) = *(arry_1 + 0);
+								*(ste_out.data + 1) = *(arry_1 + 1);
+								*(ste_out.data + 2) = *(arry_2 + 1);
+								//*(ste_out.data + 0) = *(arry_1 + 0);
+								//*(ste_out.data + 1) = *(arry_1 + 1);
+								//*(ste_out.data + 2) = *(arry_2 + 1);
+								ste_out.done = 1;							// Finish.
+								done = 1;
+							}
+					}
+					break;
+				// Send device addr. rd command.
+				case 12:												// 
+					while(!IIC2S_TCF);							// Wait until transmission is done.
+					IIC2D = *(i2c_buffer + 5);					// Send the device address and W/R bit sets to read.
+					prev_st = 12;
+					i2c_state = 5; 								// I2C_ACK_QRY;			// next state
+					break;
+				// Change mode to receive.
+				case 13:												// 
+					//dummy_rd = IIC2D;								// Take back 0x91 address rd.
+					//delay(20);										// 
+					delay(50);										// 
+					IIC2C1_TX = 0;									// Change to read mode.
+					//while(!IIC2S_TCF);							// Wait until ready.
+					//dummy_rd = IIC2D;								// Take back 0x91 address rd.
+					//delay(50);										// 
+					i2c_state = 15; 								// Start to read data.
+					break;
+				// Wait before sending a stop bit.
+				case 14:												// 
+					delay(40);										// Wait.
+					//delay(100);										// 516 us.
+					prev_st = 14;
+					i2c_state = 8;									// 
+					break;
+				// Read one byte of data from sensor.
+				//case 15:												// I2C_RD_BYTE:
+				//	if(rd_byte_cntr == 1)
+				//		IIC2C1_TXAK = 1;							// Send NACK.
+				//	while(!IIC2S_TCF);							// Wait until ready.
+				//	// When transmission is done, ready to do something. 
+				//	*(ste_out.data + rd_byte_cntr) = IIC2D;// Read one byte of data from sensor.
+				//	rd_byte_cntr += 1;							// Increment counter.
+				//	i2c_state = 16;								// Send ACK.
+				case 15:												// I2C_RD_BYTE:
+					while(!IIC2S_TCF);							// Wait until ready.
+					// When transmission is done, ready to do something. 
+					if (first_read)
+						*(arry_1 + rd_byte_cntr) = IIC2D;	// Read one byte of data from sensor.
+					else
+						*(arry_2 + rd_byte_cntr) = IIC2D;	// Read one byte of data from sensor.
+						//*(ste_out.data + rd_byte_cntr) = IIC2D;// Read one byte of data from sensor.
+					rd_byte_cntr += 1;							// Increment counter.
+					i2c_state = 16;								// Send ACK.
+					break;
+				// Send ACK after byte read.
+				//case 16:												// I2C_SND_ACK:
+				//	if(rd_byte_cntr < 2)							// If less than 2 bytes.
+				//	{
+				//		while(!IIC2S_TCF);						// Wait until transmission is done.
+				//		IIC2C1_TXAK = 0;							// Send ACK.
+				//		i2c_state = 15;
+				//	}
+				//	else
+				//		i2c_state = 17;							// Wait.
+				case 16:												// I2C_SND_ACK:
+					while(!IIC2S_TCF);							// Wait until transmission is done.
+					IIC2C1_TXAK = 0;								// Send ACK.
+					if (rd_byte_cntr == tot_rd_bytes)
+						i2c_state = 17;							// Wait.
+					else
+						i2c_state = 15;
+					break;
+				// Wait before sending a stop bit.
+				case 17:												// 
+					//delay(100);										// Wait.
+					delay(40);										// Wait.
+					prev_st = 17;
+					i2c_state = 8;									// 
 					break;
 			} 	// switch 
 		}		// while 

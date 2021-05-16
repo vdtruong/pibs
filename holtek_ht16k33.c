@@ -478,7 +478,7 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 			temp_c = (float)((D - A)*(C - B)/(E-B)) + A;
 			temp_f = 32*temp_c*9/5 + 32;
 			break;
-		case 0x04:											// sens_type = 3, asair aht20
+		case 0x04:											// sens_type = 4, asair aht20
 			temp_raw = *(data + 3);						// 
 			temp_raw <<= 8;								// shift left
 			temp_raw |= *(data + 4);					// 
@@ -488,6 +488,16 @@ unsigned char ht16k33_fsm(unsigned char des_addr, unsigned char *data, unsigned 
 			//temp_c = ((float)temp_raw/1048576.0)*200 - 50;
 			// Calculate temp. for Farenheit. 
 			temp_f = ((float)temp_raw/262144.0 - 1)*90 + 32.0;
+			break;
+		case 0x05:											// sens_type = 5, ad adt7410
+			temp_raw = *(data + 2);						// 
+			temp_raw <<= 8;								// shift left
+			temp_raw |= *(data + 1);					// 
+			temp_raw >>= 3;								// shift right, only use [15:3]
+			// Calculate temp. for Celsius.
+			//temp_c = ((float)temp_raw/1048576.0)*200 - 50;
+			// Calculate temp. for Farenheit. 
+			temp_f = ((float)temp_raw*9/80) + 32.0;
 			break;
 		default:
 			temp_raw = *(data + 4);						// temp msb

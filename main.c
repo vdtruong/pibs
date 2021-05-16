@@ -52,17 +52,28 @@ void main(void) {
 	initHt16k33(0);									// Initialize 7-seg displays.  They use iic1.
 	delay(5000);
 	delay(5000);
-	delay(1000);
-	delay(1000);
-		
-
 	
 	for(;;) {
-  		// This is the main part. ******************************************
-		// The whole routine is for one sensor at a time.
-		// Switch tca to each sensor channel.  
-		while(!tca9548a_fsm(0xee, cntrl_reg, 1));								// Wait until done.
-		delay(5000);
+  
+  		
+		//sens_outputs = i2c_fsm_aht20_demo(strt);							// Capture ad adt7410 temp. sensor data.
+		//delay(5000);
+		//sens_outputs = i2c_fsm_adt7410(strt);							// Capture ad adt7410 temp. sensor data.
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//sens_outputs = i2c_fsm_sht3x(strt);							// Capture sht3x temp. sensor data.
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		//delay(5000);
+		
 		
 		/*
 		while(!tca9548a_fsm(0xee, 0, 1));								// Wait until done.
@@ -79,8 +90,15 @@ void main(void) {
 		delay(500);
 		*/	
 		
-		// Capture data.
-			
+
+		// This is the main part. ******************************************
+		// The whole routine is for one sensor at a time.
+		// Switch tca to each sensor channel.  
+		while(!tca9548a_fsm(0xee, cntrl_reg, 1));									// Wait until done.
+		delay(5000);
+		
+		// Capture data.	
+		
 		while(!sens_outputs.done)
 		{				
 			// We actually skip the first byte because it is the header, 0x08 or 0x09.
@@ -88,7 +106,7 @@ void main(void) {
 			{
 				case 0x00:																	// sens_type = 0
 					sens_outputs = i2c_fsm_shtc3(strt);								// Capture shtc3 temp. sensor data.
-					//sens_outputs = i2c_fsm_aht20(strt);								// Capture asair aht20 temp. sensor data.
+					//sens_outputs = i2c_fsm_aht20(strt);							// Capture asair aht20 temp. sensor data.
 					break;
 				case 0x01:																	// sens_type = 1
 					sens_outputs = i2c_fsm_sht3x(strt);								// Capture sht3x temp. sensor data.
@@ -102,7 +120,20 @@ void main(void) {
 					break;
 				case 0x04:																	// sens_type = 4
 					sens_outputs = i2c_fsm_aht20(strt);								// Capture asair aht20 temp. sensor data.
-					//sens_outputs = i2c_fsm_shtc3(strt);								// Capture shtc3 temp. sensor data.
+					//sens_outputs = i2c_fsm_shtc3(strt);							// Capture shtc3 temp. sensor data.
+					break;
+				case 0x05:																	// sens_type = 5
+					sens_outputs = i2c_fsm_adt7410(strt);							// Capture ad adt7410 temp. sensor data.
+					delay(5000);
+					delay(5000);
+					delay(5000);
+					delay(5000);
+					delay(5000);
+					delay(5000);
+					// Try to reduce wait next time.
+					//delay(5000);
+					//delay(5000);
+					//sens_outputs = i2c_fsm_shtc3(strt);							// Capture shtc3 temp. sensor data.
 					break;
 				default:
 					sens_outputs = i2c_fsm_shtc3(strt);								// Capture shtc3 temp. sensor data.
@@ -110,6 +141,7 @@ void main(void) {
 			}
 		}
 		
+
 		// Concatenate all data into buffer.
 		/*
 		for(j = 0; j < num_of_dat_vals; j++)
@@ -126,7 +158,7 @@ void main(void) {
 			*(dat_buffr + cntrl_reg*7 + j) = *(sens_outputs.data + j); 		// Save data into buffer.
 		}
 		delay(500);
-		
+			
 
 		// Display data to a single (cnrl_reg) 7-seg display.
 		// Wait until display is done.
@@ -134,8 +166,10 @@ void main(void) {
 		while(!ht16k33_fsm(*(des_addr + des_addr_cntr), sens_outputs.data, 0, *(sens_type_arry + cntrl_reg + 1)));
 		des_addr_cntr += 1;																// Move to next display. 
 		cntrl_reg += 1;																	// Move to the next tca (sensor) channel.
+		
 
 		// If all sensors are done.
+		
 		if(des_addr_cntr == 8)
 		{	
 			// Check for new data flag.
@@ -155,8 +189,7 @@ void main(void) {
 		
 		sens_outputs.done = 0;															// Reset.
 		
-
-	} 	/* loop forever */
-}		/* please make sure that you never leave main */
+	} 	// loop forever 
+}		// please make sure that you never leave main 
 
 

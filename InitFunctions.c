@@ -47,16 +47,16 @@ void SCI_Init (void){
                    					// Baud rate = -------------------- = ------------ = 9600bps
                    					//              [SBR12:SBR0] x 16         26 x 16
 }
-void spi2Init(void){					// for 7-seg. display
-  	SPI2BR = 0x75;    				// determine the baud rate
-  	SPI2C1 = 0x50;    				// enable system and master mode
-  	SPI2C2 = 0x00;
-}
-void spi1Init(void){					// for DAC
-  	SPI1BR = 0x00;    				// determine the baud rate
-  	SPI1C1 = 0x50;    				// enable system and master mode
-  	SPI1C2 = 0x00;
-}
+//void spi2Init(void){					// for 7-seg. display
+  //	SPI2BR = 0x75;    				// determine the baud rate
+  //	SPI2C1 = 0x50;    				// enable system and master mode
+  //	SPI2C2 = 0x00;
+//}
+//void spi1Init(void){					// for DAC
+  //	SPI1BR = 0x00;    				// determine the baud rate
+  //	SPI1C1 = 0x50;    				// enable system and master mode
+  //	SPI1C2 = 0x00;
+//}
 /* For demo board, iic1 is on pta. */
 void iic1Init(void){
   	//IIC1F = 0x09;     // multiply factor of 1, SCL divider of 32, br=125k
